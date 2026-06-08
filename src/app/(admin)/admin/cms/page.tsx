@@ -1,5 +1,19 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
+
+// Upload directly from browser to Cloudinary — bypasses Vercel 4.5MB body limit
+async function uploadToCloudinary(file: File): Promise<string> {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+  if (!cloudName || !uploadPreset) throw new Error('Cloudinary belum dikonfigurasi')
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('upload_preset', uploadPreset)
+  fd.append('folder', 'hydroponic-monitor')
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { method: 'POST', body: fd })
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error?.message || 'Upload gagal') }
+  return (await res.json()).secure_url as string
+}
 import { api } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -69,14 +83,11 @@ function ImageUploadRow({ onAdd, addLabel = 'Tambahkan' }: { onAdd: (url: string
   const [uploading, setUploading] = useState(false)
 
   const uploadFile = async (file: File) => {
-    if (file.size > 5 * 1024 * 1024) { toast('error', 'Maks 5 MB'); return }
+    if (file.size > 10 * 1024 * 1024) { toast('error', 'Maks 10 MB'); return }
     setUploading(true)
     try {
-      const fd = new FormData(); fd.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      setImgUrl(data.url)
+      const url = await uploadToCloudinary(file)
+      setImgUrl(url)
       toast('success', 'Gambar diunggah')
     } catch (err: unknown) {
       toast('error', err instanceof Error ? err.message : 'Gagal upload')
@@ -136,14 +147,11 @@ function GalleryUploadRow({ onAdd }: { onAdd: (item: GalleryItem) => void }) {
   const [uploading, setUploading] = useState(false)
 
   const uploadFile = async (file: File) => {
-    if (file.size > 5 * 1024 * 1024) { toast('error', 'Maks 5 MB'); return }
+    if (file.size > 10 * 1024 * 1024) { toast('error', 'Maks 10 MB'); return }
     setUploading(true)
     try {
-      const fd = new FormData(); fd.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
-      setImgUrl(data.url)
+      const url = await uploadToCloudinary(file)
+      setImgUrl(url)
       toast('success', 'Gambar diunggah')
     } catch (err: unknown) {
       toast('error', err instanceof Error ? err.message : 'Gagal upload')

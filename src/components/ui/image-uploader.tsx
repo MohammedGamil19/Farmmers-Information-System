@@ -8,7 +8,30 @@ interface Props {
   onChange: (url: string) => void
   label?: string
   hint?: string
-  aspectClass?: string // e.g. 'aspect-video' or 'aspect-[4/3]'
+  aspectClass?: string
+}
+
+// Upload directly from browser to Cloudinary (no server size limit)
+async function uploadToCloudinary(file: File): Promise<string> {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+  const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+  if (!cloudName || !uploadPreset) throw new Error('Cloudinary belum dikonfigurasi')
+
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('upload_preset', uploadPreset)
+  fd.append('folder', 'hydroponic-monitor')
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: 'POST',
+    body: fd,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.error?.message || 'Upload gagal')
+  }
+  const data = await res.json()
+  return data.secure_url as string
 }
 
 export function ImageUploader({ value, onChange, label, hint, aspectClass = 'aspect-video' }: Props) {
@@ -20,15 +43,11 @@ export function ImageUploader({ value, onChange, label, hint, aspectClass = 'asp
 
   const uploadFile = async (file: File) => {
     if (!file.type.startsWith('image/')) { toast('error', 'Hanya file gambar yang diizinkan'); return }
-    if (file.size > 5 * 1024 * 1024) { toast('error', 'Ukuran file maksimal 5 MB'); return }
+    if (file.size > 10 * 1024 * 1024) { toast('error', 'Ukuran file maksimal 10 MB'); return }
     setUploading(true)
     try {
-      const fd = new FormData()
-      fd.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Upload gagal')
-      onChange(data.url)
+      const url = await uploadToCloudinary(file)
+      onChange(url)
       toast('success', 'Gambar berhasil diunggah')
     } catch (err: unknown) {
       toast('error', err instanceof Error ? err.message : 'Upload gagal')
@@ -103,7 +122,7 @@ export function ImageUploader({ value, onChange, label, hint, aspectClass = 'asp
                 <p className="text-sm font-semibold text-gray-700">
                   {uploading ? 'Mengunggah...' : 'Klik atau seret foto ke sini'}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP, GIF · Maks. 5 MB</p>
+                <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP, GIF · Maks. 10 MB</p>
               </div>
             </div>
           )}
