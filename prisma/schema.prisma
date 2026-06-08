@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  SUPER_ADMIN
+  VILLAGE_ADMIN
+  FARMER
+}
+
+enum FarmStatus {
+  ACTIVE
+  GROWING
+  READY_FOR_HARVEST
+  HARVESTED
+}
+
+enum CropStage {
+  SEEDLING
+  VEGETATIVE
+  GROWING
+  READY_FOR_HARVEST
+  HARVESTED
+}
+
+enum NotificationType {
+  ABNORMAL_PH
+  ABNORMAL_TDS
+  UPCOMING_HARVEST
+  MISSING_RECORD
+  SYSTEM
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(FARMER)
+  phone     String?
+  avatar    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  villageId String?
+  village   Village? @relation(fields: [villageId], references: [id])
+
+  farms             Farm[]
+  monitoringRecords MonitoringRecord[]
+  notifications     Notification[]
+  plantTypes        PlantType[]
+
+  @@map("users")
+}
+
+model Village {
+  id          String   @id @default(cuid())
+  name        String
+  district    String
+  province    String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users User[]
+  farms Farm[]
+
+  @@map("villages")
+}
+
+model PlantType {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  minPH       Float    @default(5.5)
+  maxPH       Float    @default(7.0)
+  minTDS      Float    @default(800)
+  maxTDS      Float    @default(2000)
+  growthDays  Int      @default(30)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  farms Farm[]
+
+  @@map("plant_types")
+}
+
+model Farm {
+  id               String     @id @default(cuid())
+  name             String
+  description      String?
+  location         String?
+  area             Float?
+  status           FarmStatus @default(ACTIVE)
+  cropStage        CropStage  @default(SEEDLING)
+  plantingDate     DateTime
+  estimatedHarvest DateTime?
+  actualHarvest    DateTime?
+  isActive         Boolean    @default(true)
+  deviceToken      String?    @unique
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id])
+  villageId   String
+  village     Village   @relation(fields: [villageId], references: [id])
+  plantTypeId String
+  plantType   PlantType @relation(fields: [plantTypeId], references: [id])
+
+  monitoringRecords MonitoringRecord[]
+
+  @@map("farms")
+}
+
+model MonitoringRecord {
+  id          String   @id @default(cuid())
+  date        DateTime
+  phValue     Float
+  tdsValue    Float
+  temperature Float?
+  humidity    Float?
+  notes       String?
+  phStatus    String   @default("NORMAL")
+  tdsStatus   String   @default("NORMAL")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  actionTaken String?
+  source      String   @default("MANUAL")
+
+  farmId String
+  farm   Farm   @relation(fields: [farmId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("monitoring_records")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  title     String
+  message   String
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
