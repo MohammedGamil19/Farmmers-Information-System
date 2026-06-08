@@ -18,17 +18,14 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([
-      api.get('/api/analytics?days=14'),
-      api.get('/api/notifications'),
-      api.get('/api/farms'),
-    ]).then(([analytics, notifs, farmsData]) => {
-      setStats(analytics.stats)
-      setRecords(analytics.records)
-      setNotifications(notifs.notifications)
-      setFarms(farmsData.farms)
+    // Single combined API call instead of 3 separate requests
+    api.get('/api/dashboard').then((data) => {
+      setStats(data.stats)
+      setRecords(data.records)
+      setNotifications(data.notifications)
+      setFarms(data.farms)
     }).finally(() => setLoading(false))
-    // Check stage advancement in background — creates notifications if any farm is behind
+    // Check stage advancement in background
     api.post('/api/farms/check-stages', {}).catch(() => {/* silent */})
   }, [])
 

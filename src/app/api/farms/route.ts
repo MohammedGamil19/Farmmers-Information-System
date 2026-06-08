@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
+import { getAdminVillageId } from '@/lib/get-village-id'
 
 export async function GET(request: NextRequest) {
   const user = getUserFromRequest(request)
@@ -13,10 +14,11 @@ export async function GET(request: NextRequest) {
   const ownerId = searchParams.get('ownerId')
 
   const where: Record<string, unknown> = { isActive: true }
-  if (user.role === 'FARMER') where.ownerId = user.userId
-  else if (user.role === 'VILLAGE_ADMIN') {
-    const admin = await prisma.user.findUnique({ where: { id: user.userId } })
-    if (admin?.villageId) where.villageId = admin.villageId
+  if (user.role === 'FARMER') {
+    where.ownerId = user.userId
+  } else if (user.role === 'VILLAGE_ADMIN') {
+    const vid = await getAdminVillageId(user.userId)
+    if (vid) where.villageId = vid
   }
   if (villageId) where.villageId = villageId
   if (status) where.status = status
@@ -24,7 +26,12 @@ export async function GET(request: NextRequest) {
 
   const farms = await prisma.farm.findMany({
     where,
-    include: { owner: { select: { id: true, name: true, email: true } }, village: true, plantType: true, monitoringRecords: { orderBy: [{ date: 'desc' }, { createdAt: 'desc' }], take: 3 } },
+    include: {
+      owner: { select: { id: true, name: true, email: true } },
+      village: true,
+      plantType: true,
+      monitoringRecords: { orderBy: [{ date: 'desc' }, { createdAt: 'desc' }], take: 3 },
+    },
     orderBy: { createdAt: 'desc' },
   })
   return NextResponse.json({ farms })
