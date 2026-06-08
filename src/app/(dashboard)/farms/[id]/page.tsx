@@ -72,7 +72,7 @@ async function generateCyclePDF(
   const tdsVals  = records.map(r => r.tdsValue as number).filter(Boolean)
   const avgPh    = phVals.length  ? (phVals.reduce((a, b) => a + b, 0)  / phVals.length).toFixed(2)  : '-'
   const avgTds   = tdsVals.length ? (tdsVals.reduce((a, b) => a + b, 0) / tdsVals.length).toFixed(0) : '-'
-  const abnormal = records.filter(r => r.status === 'ABNORMAL' || r.status === 'WARNING').length
+  const abnormal = records.filter(r => r.phStatus === 'ABNORMAL' || r.tdsStatus === 'ABNORMAL').length
 
   doc.setFont('helvetica', 'normal')
   const cols = [
@@ -542,11 +542,12 @@ function NextStageButton({
 
 // ── Device Connection Card ─────────────────────────────────────────────────────
 function DeviceCard({ farmId, initialToken }: { farmId: string; initialToken: string | null }) {
-  const [token,       setToken]       = useState<string | null>(initialToken)
-  const [visible,     setVisible]     = useState(false)
-  const [generating,  setGenerating]  = useState(false)
-  const [revoking,    setRevoking]    = useState(false)
-  const [copied,      setCopied]      = useState(false)
+  const [token,         setToken]         = useState<string | null>(initialToken)
+  const [visible,       setVisible]       = useState(false)
+  const [generating,    setGenerating]    = useState(false)
+  const [revoking,      setRevoking]      = useState(false)
+  const [copied,        setCopied]        = useState(false)
+  const [confirmRevoke, setConfirmRevoke] = useState(false)
 
   const generate = async () => {
     setGenerating(true)
@@ -561,7 +562,7 @@ function DeviceCard({ farmId, initialToken }: { farmId: string; initialToken: st
   }
 
   const revoke = async () => {
-    if (!confirm('Cabut token? Perangkat tidak akan bisa mengirim data lagi sampai token baru dibuat.')) return
+    setConfirmRevoke(false)
     setRevoking(true)
     try {
       await api.delete(`/api/farms/${farmId}/token`)
@@ -718,7 +719,7 @@ const char* SERVER_URL    = "https://your-domain.com/api/device";`
                 Regenerate Token
               </button>
               <button
-                onClick={revoke}
+                onClick={() => setConfirmRevoke(true)}
                 disabled={revoking}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
               >
@@ -727,8 +728,45 @@ const char* SERVER_URL    = "https://your-domain.com/api/device";`
               </button>
             </div>
           </div>
+
         )}
       </CardContent>
+
+      {/* Revoke confirmation modal */}
+      {confirmRevoke && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="bg-red-50 px-6 py-5 flex items-center gap-3">
+              <div className="w-11 h-11 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
+                <Unplug size={20} className="text-red-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-gray-800">Cabut Token Perangkat?</h2>
+                <p className="text-xs text-red-500 font-medium">Koneksi sensor akan terputus</p>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-sm text-gray-600 mb-4">
+                Perangkat ESP32 tidak akan bisa mengirim data lagi sampai token baru dibuat.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmRevoke(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={revoke}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors"
+                >
+                  <Unplug size={14} />Ya, Cabut
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   )
 }

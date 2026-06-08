@@ -27,8 +27,10 @@ type MonitoringRecord = {
   farm: { id: string; name: string; plantType: PlantType }
 }
 
+const localNow = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16) }
+
 const EMPTY_FORM = {
-  farmId: '', date: (() => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16) })(),
+  farmId: '', date: localNow(),
   phValue: '', tdsValue: '', temperature: '', humidity: '', notes: '',
 }
 
@@ -268,6 +270,7 @@ export default function MonitoringPage() {
   const { user } = useAuth()
 
   const [records,    setRecords]    = useState<MonitoringRecord[]>([])
+  const [totalCount, setTotalCount] = useState(0)
   const [farms,      setFarms]      = useState<Record<string, unknown>[]>([])
   const [loading,    setLoading]    = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -294,7 +297,7 @@ export default function MonitoringPage() {
   const load = () => {
     setLoading(true)
     Promise.all([api.get('/api/monitoring?limit=100'), api.get('/api/farms')])
-      .then(([m, f]) => { setRecords(m.records); setFarms(f.farms) })
+      .then(([m, f]) => { setRecords(m.records); setTotalCount(m.total ?? m.records.length); setFarms(f.farms) })
       .finally(() => setLoading(false))
   }
   useEffect(() => { load() }, [])
@@ -361,7 +364,7 @@ export default function MonitoringPage() {
       })
       toast('success', 'Data monitoring berhasil disimpan')
       setShowAddModal(false)
-      setForm({ ...EMPTY_FORM, farmId: initialFarmId })
+      setForm({ ...EMPTY_FORM, date: localNow(), farmId: initialFarmId })
       setAddStep('form')
       setActionSelected('')
       load()
@@ -463,7 +466,7 @@ export default function MonitoringPage() {
       {records.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
           {[
-            { label: 'Total Catatan',    value: records.length,          color: 'text-blue-600',                            icon: FlaskConical, desc: 'Semua data tersimpan' },
+            { label: 'Total Catatan',    value: totalCount,              color: 'text-blue-600',                            icon: FlaskConical, desc: 'Semua data tersimpan' },
             { label: 'pH Rata-rata',     value: avgPh.toFixed(2),        color: 'text-green-600',                           icon: Droplets,     desc: '10 catatan terakhir' },
             { label: 'Nutrisi (TDS)',    value: `${Math.round(avgTds)} ppm`, color: 'text-purple-600',                      icon: Sprout,       desc: '10 catatan terakhir' },
             { label: 'Perlu Perhatian',  value: abnormal,                 color: abnormal > 0 ? 'text-red-600' : 'text-gray-400', icon: AlertTriangle, desc: 'Dari 10 catatan terakhir' },
@@ -525,8 +528,8 @@ export default function MonitoringPage() {
                               {normal ? 'Kondisi Baik ✓' : 'Perlu Tindakan ⚠'}
                             </span>
                             {r.source === 'DEVICE'
-                              ? <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700"> Sensor</span>
-                              : <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-500"> Manual</span>}
+                              ? <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">🔌 Sensor</span>
+                              : <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-orange-100 text-orange-700">✍️ Manual</span>}
                             {/* Action taken badge */}
                             {hasAction && (
                               <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700 flex items-center gap-1">
@@ -581,7 +584,7 @@ export default function MonitoringPage() {
                         r={r}
                         canEdit={canEdit}
                         onEdit={() => openEdit(r)}
-                        onDelete={() => handleDelete(r.id, r.farm?.name)}
+                        onDelete={() => handleDelete(r.id, r.farm?.name ?? 'kebun ini')}
                         deleting={deleting === r.id}
                       />
                     )}

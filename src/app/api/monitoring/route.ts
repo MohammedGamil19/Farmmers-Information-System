@@ -24,13 +24,16 @@ export async function GET(request: NextRequest) {
       ...(to ? { lte: new Date(to + 'T23:59:59') } : {}),
     }
   }
-  const records = await prisma.monitoringRecord.findMany({
-    where,
-    include: { farm: { include: { plantType: true } }, user: { select: { id: true, name: true } } },
-    orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
-    take: limit,
-  })
-  return NextResponse.json({ records })
+  const [records, total] = await Promise.all([
+    prisma.monitoringRecord.findMany({
+      where,
+      include: { farm: { include: { plantType: true } }, user: { select: { id: true, name: true } } },
+      orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+      take: limit,
+    }),
+    prisma.monitoringRecord.count({ where }),
+  ])
+  return NextResponse.json({ records, total })
 }
 
 export async function POST(request: NextRequest) {
