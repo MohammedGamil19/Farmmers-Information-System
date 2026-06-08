@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Leaf, BarChart3, Bell, Shield, CheckCircle, FlaskConical, Users, MapPin, Activity } from 'lucide-react'
