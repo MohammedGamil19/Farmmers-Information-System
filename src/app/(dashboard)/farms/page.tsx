@@ -116,12 +116,12 @@ export default function FarmsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between mb-6 gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Kebun</h1>
-          <p className="text-gray-500">Kelola kebun hidroponik</p>
+          <p className="text-gray-500 text-sm">Kelola kebun hidroponik</p>
         </div>
-        <Button onClick={() => setShowModal(true)}><Plus size={16} />Tambah Kebun</Button>
+        <Button onClick={() => setShowModal(true)} className="shrink-0"><Plus size={16} />Tambah Kebun</Button>
       </div>
 
       {loading ? (
@@ -184,7 +184,7 @@ export default function FarmsPage() {
             required
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Plant type select — with "Add new" option */}
             <div className="w-full">
               <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Tanaman *</label>
@@ -305,11 +305,11 @@ export default function FarmsPage() {
             />
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Lokasi/Blok" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} placeholder="Blok A" />
             <Input label="Luas (m²)" type="number" value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} placeholder="50" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Tanggal Tanam *" type="date" value={form.plantingDate} onChange={e => setForm({ ...form, plantingDate: e.target.value })} required />
             <Input label="Estimasi Panen" type="date" value={form.estimatedHarvest} onChange={e => setForm({ ...form, estimatedHarvest: e.target.value })} />
           </div>

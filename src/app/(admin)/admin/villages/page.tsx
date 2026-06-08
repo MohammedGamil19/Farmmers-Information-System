@@ -40,9 +40,9 @@ export default function AdminVillagesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div><h1 className="text-2xl font-bold text-gray-800">Manajemen Desa</h1><p className="text-gray-500">{villages.length} desa terdaftar</p></div>
-        <Button onClick={openNew}><Plus size={16} />Tambah Desa</Button>
+      <div className="flex items-start justify-between mb-6 gap-3">
+        <div><h1 className="text-2xl font-bold text-gray-800">Manajemen Desa</h1><p className="text-gray-500 text-sm">{villages.length} desa terdaftar</p></div>
+        <Button onClick={openNew} className="shrink-0"><Plus size={16} />Tambah Desa</Button>
       </div>
 
       {loading ? <div className="flex justify-center py-20"><div className="h-10 w-10 animate-spin rounded-full border-4 border-green-600 border-t-transparent" /></div> : (

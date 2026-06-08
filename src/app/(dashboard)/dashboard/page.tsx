@@ -68,10 +68,10 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
           Selamat Datang, {user?.name}! 👋
         </h1>
-        <p className="text-gray-500">
+        <p className="text-gray-500 text-sm">
           {isFarmer
             ? 'Pantau kondisi kebun hidroponik Anda hari ini'
             : 'Ringkasan sistem monitoring hidroponik'}

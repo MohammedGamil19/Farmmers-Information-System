@@ -170,68 +170,64 @@ export default function ReportsPage() {
           <CardTitle className="flex items-center gap-2"><Filter size={18} />Filter Laporan</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap items-end gap-4">
-            {/* Farm selector */}
-            <div className="w-56">
-              <Select
-                label="Pilih Kebun"
-                value={farmId}
-                onChange={e => setFarmId(e.target.value)}
-                options={[
-                  { value: '', label: '-- Pilih Kebun --' },
-                  ...farms.map((f: Record<string, unknown>) => ({ value: f.id as string, label: f.name as string })),
-                ]}
-              />
-            </div>
+          <div className="space-y-4">
+            {/* Row 1: Farm selector + presets */}
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="w-full sm:w-56">
+                <Select
+                  label="Pilih Kebun"
+                  value={farmId}
+                  onChange={e => setFarmId(e.target.value)}
+                  options={[
+                    { value: '', label: '-- Pilih Kebun --' },
+                    ...farms.map((f: Record<string, unknown>) => ({ value: f.id as string, label: f.name as string })),
+                  ]}
+                />
+              </div>
 
-            {/* Divider */}
-            <div className="hidden md:block w-px h-10 bg-gray-200" />
-
-            {/* Quick presets */}
-            <div>
-              <p className="text-xs font-medium text-gray-500 mb-1.5 flex items-center gap-1">
-                <CalendarRange size={12} />Rentang Cepat
-              </p>
-              <div className="flex gap-1.5">
-                {PRESETS.map(p => (
-                  <button
-                    key={p.label}
-                    type="button"
-                    onClick={() => applyPreset(p.days)}
-                    className="px-3 py-1.5 text-xs rounded-lg border border-green-300 text-green-700 hover:bg-green-50 transition-colors font-medium"
-                  >
-                    {p.label}
-                  </button>
-                ))}
+              {/* Quick presets */}
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1.5 flex items-center gap-1">
+                  <CalendarRange size={12} />Rentang Cepat
+                </p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {PRESETS.map(p => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => applyPreset(p.days)}
+                      className="px-3 py-1.5 text-xs rounded-lg border border-green-300 text-green-700 hover:bg-green-50 transition-colors font-medium"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Divider */}
-            <div className="hidden md:block w-px h-10 bg-gray-200" />
-
-            {/* Custom dates */}
-            <div className="flex items-end gap-2">
-              <Input
-                label="Dari Tanggal"
-                type="date"
-                value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
-                className="w-40"
-              />
-              <span className="text-gray-400 mb-2.5">—</span>
-              <Input
-                label="Sampai Tanggal"
-                type="date"
-                value={dateTo}
-                onChange={e => setDateTo(e.target.value)}
-                className="w-40"
-              />
+            {/* Row 2: Custom dates + Load */}
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex items-end gap-2 flex-wrap">
+                <Input
+                  label="Dari Tanggal"
+                  type="date"
+                  value={dateFrom}
+                  onChange={e => setDateFrom(e.target.value)}
+                  className="w-full sm:w-40"
+                />
+                <span className="text-gray-400 mb-2.5 hidden sm:block">—</span>
+                <Input
+                  label="Sampai Tanggal"
+                  type="date"
+                  value={dateTo}
+                  onChange={e => setDateTo(e.target.value)}
+                  className="w-full sm:w-40"
+                />
+              </div>
+              <Button onClick={loadData} loading={loading}>
+                Muat Data
+              </Button>
             </div>
-
-            {/* Load button */}
-            <Button onClick={loadData} loading={loading}>
-              Muat Data
-            </Button>
           </div>
         </CardContent>
       </Card>

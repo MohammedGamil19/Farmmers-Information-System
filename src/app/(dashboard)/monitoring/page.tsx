@@ -435,13 +435,13 @@ export default function MonitoringPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between mb-6 gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Monitoring pH &amp; TDS</h1>
-          <p className="text-gray-500">Catat dan cek kondisi air kebun Anda setiap hari</p>
+          <p className="text-gray-500 text-sm">Catat dan cek kondisi air kebun Anda setiap hari</p>
         </div>
-        <Button onClick={() => { setAddStep('form'); setShowAddModal(true) }}>
-          <Plus size={16} />Catat Data Baru
+        <Button onClick={() => { setAddStep('form'); setShowAddModal(true) }} className="shrink-0">
+          <Plus size={16} /><span className="hidden sm:inline">Catat Data Baru</span><span className="sm:hidden">Catat</span>
         </Button>
       </div>
 
@@ -605,7 +605,7 @@ export default function MonitoringPage() {
       >
         {addStep === 'form' ? (
           <form onSubmit={handleFormNext} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
                 label="Pilih Kebun *"
                 value={form.farmId}
@@ -626,11 +626,11 @@ export default function MonitoringPage() {
               )
             })()}
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input label="Nilai pH *" type="number" step="0.01" min="0" max="14" value={form.phValue} onChange={e => setForm({ ...form, phValue: e.target.value })} placeholder="6.5" required />
               <Input label="Nilai TDS (ppm) *" type="number" step="1" value={form.tdsValue} onChange={e => setForm({ ...form, tdsValue: e.target.value })} placeholder="1200" required />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input label="Suhu (°C)" type="number" step="0.1" value={form.temperature} onChange={e => setForm({ ...form, temperature: e.target.value })} placeholder="26" />
               <Input label="Kelembaban (%)" type="number" step="1" min="0" max="100" value={form.humidity} onChange={e => setForm({ ...form, humidity: e.target.value })} placeholder="75" />
             </div>
@@ -699,7 +699,7 @@ export default function MonitoringPage() {
 
             <Input label="Tanggal & Waktu *" type="datetime-local" value={editForm.date} onChange={e => setEditForm({ ...editForm, date: e.target.value })} required />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Input label="Nilai pH *" type="number" step="0.01" min="0" max="14" value={editForm.phValue} onChange={e => setEditForm({ ...editForm, phValue: e.target.value })} required />
                 {editPhRecs.length > 0 && <div className={`border rounded-lg p-2 text-xs ${recColors[editPhRecs[0].type]}`}><span className="font-semibold">{editPhRecs[0].title}: </span>{editPhRecs[0].message}</div>}
@@ -710,7 +710,7 @@ export default function MonitoringPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input label="Suhu (°C)" type="number" step="0.1" value={editForm.temperature} onChange={e => setEditForm({ ...editForm, temperature: e.target.value })} placeholder="26" />
               <Input label="Kelembaban (%)" type="number" step="1" min="0" max="100" value={editForm.humidity} onChange={e => setEditForm({ ...editForm, humidity: e.target.value })} placeholder="75" />
             </div>

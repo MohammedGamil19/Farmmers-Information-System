@@ -196,9 +196,9 @@ export default async function HomePage() {
 
             {gallery.length >= 4 && (
               <div className="space-y-4">
-                {/* Featured row — both images the same height */}
-                <div className="flex gap-4 h-[420px]">
-                  <div className="relative flex-[2] rounded-2xl overflow-hidden shadow-md group">
+                {/* Featured row — stacked on mobile, side-by-side on md+ */}
+                <div className="flex flex-col md:flex-row gap-4 md:h-[420px]">
+                  <div className="relative md:flex-[2] rounded-2xl overflow-hidden shadow-md group aspect-[4/3] md:aspect-auto">
                     <Image src={gallery[0].url} alt={gallery[0].caption || 'Foto kebun 1'} fill className="object-cover group-hover:scale-105 transition-transform duration-500" unoptimized />
                     {gallery[0].caption && (
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-4">
@@ -206,7 +206,7 @@ export default async function HomePage() {
                       </div>
                     )}
                   </div>
-                  <div className="relative flex-1 rounded-2xl overflow-hidden shadow-md group">
+                  <div className="relative md:flex-1 rounded-2xl overflow-hidden shadow-md group aspect-[4/3] md:aspect-auto">
                     <Image src={gallery[1].url} alt={gallery[1].caption || 'Foto kebun 2'} fill className="object-cover group-hover:scale-105 transition-transform duration-500" unoptimized />
                     {gallery[1].caption && (
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-4">

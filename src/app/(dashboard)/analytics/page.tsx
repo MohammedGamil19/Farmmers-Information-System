@@ -45,11 +45,11 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-6 flex-wrap">
-        <div className="w-48">
+      <div className="flex gap-3 mb-6 flex-wrap">
+        <div className="w-full sm:w-44">
           <Select label="Periode" value={days} onChange={e => setDays(e.target.value)} options={[{ value: '7', label: '7 Hari' }, { value: '14', label: '14 Hari' }, { value: '30', label: '30 Hari' }, { value: '90', label: '90 Hari' }]} />
         </div>
-        <div className="w-64">
+        <div className="w-full sm:w-64">
           <Select label="Kebun" value={farmId} onChange={e => setFarmId(e.target.value)} options={[{ value: '', label: 'Semua Kebun' }, ...farms.map((f: Record<string, unknown>) => ({ value: f.id as string, label: f.name as string }))]} />
         </div>
       </div>

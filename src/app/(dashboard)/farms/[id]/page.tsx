@@ -825,18 +825,22 @@ export default function FarmDetailPage() {
   return (
     <div>
       {/* Page header */}
-      <div className="flex items-center gap-4 mb-6">
-        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-lg">
-          <ArrowLeft size={20} />
-        </button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-800">{farm.name as string}</h1>
-          <p className="text-gray-500 flex items-center gap-2"><MapPin size={13} />{village?.name as string}</p>
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-lg shrink-0">
+            <ArrowLeft size={20} />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 truncate">{farm.name as string}</h1>
+            <p className="text-gray-500 text-sm flex items-center gap-1"><MapPin size={12} />{village?.name as string}</p>
+          </div>
+          <Badge variant="success" className="shrink-0">{getFarmStatusLabel(farm.status as string)}</Badge>
         </div>
-        <Badge variant="success">{getFarmStatusLabel(farm.status as string)}</Badge>
-        <Link href={`/monitoring?farmId=${id}`}>
-          <Button><FlaskConical size={16} />Input Monitoring</Button>
-        </Link>
+        <div className="ml-11">
+          <Link href={`/monitoring?farmId=${id}`}>
+            <Button size="sm"><FlaskConical size={15} />Input Monitoring</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Auto-stage advance banner */}
@@ -849,7 +853,7 @@ export default function FarmDetailPage() {
       />
 
       {/* Info Cards */}
-      <div className="grid md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {[
           { label: 'Jenis Tanaman',    value: pt?.name    as string,                                        icon: '🌿' },
           { label: 'Pemilik',          value: owner?.name as string,                                        icon: '👤' },
@@ -874,9 +878,9 @@ export default function FarmDetailPage() {
       {/* Crop Stage Timeline */}
       <Card className="mb-6">
         <CardHeader>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
             <CardTitle>Tahap Pertumbuhan</CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <NextStageButton
                 farmId={id}
                 currentStage={farm.cropStage as string}
