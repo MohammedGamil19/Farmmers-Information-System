@@ -1,13 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaNeon } from '@prisma/adapter-neon'
-import { neonConfig } from '@neondatabase/serverless'
 
-// Use fetch-based transport in serverless/edge (no TCP handshake overhead)
-if (typeof WebSocket === 'undefined') {
-  // Node.js environment — use the ws polyfill Neon provides
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  neonConfig.webSocketConstructor = require('ws')
-}
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
 
