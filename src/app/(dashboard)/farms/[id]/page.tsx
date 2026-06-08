@@ -690,7 +690,7 @@ function DeviceCard({ farmId, initialToken }: { farmId: string; initialToken: st
 const char* WIFI_PASSWORD = "PasswordWiFi";
 const char* FARM_ID       = "${farmId}";
 const char* DEVICE_TOKEN  = "${visible ? token : '(klik 👁 untuk tampilkan token)'}";
-const char* SERVER_URL    = "https://your-domain.com/api/device";`}
+const char* SERVER_URL    = "${process.env.NEXT_PUBLIC_APP_URL}/api/device";`}
                 </pre>
                 <button
                   onClick={() => copy(
@@ -698,7 +698,7 @@ const char* SERVER_URL    = "https://your-domain.com/api/device";`}
 const char* WIFI_PASSWORD = "PasswordWiFi";
 const char* FARM_ID       = "${farmId}";
 const char* DEVICE_TOKEN  = "${token}";
-const char* SERVER_URL    = "https://your-domain.com/api/device";`
+const char* SERVER_URL    = "${process.env.NEXT_PUBLIC_APP_URL}/api/device";`
                   )}
                   className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-colors"
                   title="Salin kode"
