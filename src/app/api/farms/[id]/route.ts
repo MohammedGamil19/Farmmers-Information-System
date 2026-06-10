@@ -2,11 +2,31 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
+import { getAdminVillageId } from '@/lib/get-village-id'
+
+// Returns the farm if the requesting user is allowed to access it, otherwise
+// null. SUPER_ADMIN can access everything, VILLAGE_ADMIN only farms in their
+// own village, FARMER only farms they own.
+async function getAuthorizedFarm(id: string, user: { userId: string; role: string }) {
+  const farm = await prisma.farm.findUnique({ where: { id } })
+  if (!farm) return null
+  if (user.role === 'SUPER_ADMIN') return farm
+  if (user.role === 'VILLAGE_ADMIN') {
+    const villageId = await getAdminVillageId(user.userId)
+    if (villageId && farm.villageId === villageId) return farm
+    return null
+  }
+  // FARMER
+  if (farm.ownerId === user.userId) return farm
+  return null
+}
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = getUserFromRequest(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
+  const authorized = await getAuthorizedFarm(id, user)
+  if (!authorized) return NextResponse.json({ error: 'Farm not found' }, { status: 404 })
   const farm = await prisma.farm.findUnique({
     where: { id },
     include: { owner: { select: { id: true, name: true, email: true, phone: true } }, village: true, plantType: true, monitoringRecords: { orderBy: [{ date: 'desc' }, { createdAt: 'desc' }], take: 30 } },
@@ -19,6 +39,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const user = getUserFromRequest(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
+  const authorized = await getAuthorizedFarm(id, user)
+  if (!authorized) return NextResponse.json({ error: 'Farm not found' }, { status: 404 })
   const body = await request.json()
   // If starting a new cycle, auto-recalculate estimatedHarvest from plantingDate + growthDays
   let autoEstimatedHarvest: Date | undefined
@@ -60,6 +82,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
   const { id } = await params
+  const authorized = await getAuthorizedFarm(id, user)
+  if (!authorized) return NextResponse.json({ error: 'Farm not found' }, { status: 404 })
   await prisma.farm.update({ where: { id }, data: { isActive: false } })
   return NextResponse.json({ message: 'Farm deleted' })
 }

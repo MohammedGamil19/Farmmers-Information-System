@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { getPhStatus, getTdsStatus } from '@/lib/recommendations'
+import { getAdminVillageId } from '@/lib/get-village-id'
 
 export async function GET(request: NextRequest) {
   const user = getUserFromRequest(request)
@@ -16,7 +17,13 @@ export async function GET(request: NextRequest) {
   const where: Record<string, unknown> = {}
   if (farmId) where.farmId = farmId
   // Farmers see only records belonging to farms they own
-  if (user.role === 'FARMER') where.farm = { ownerId: user.userId }
+  if (user.role === 'FARMER') {
+    where.farm = { ownerId: user.userId }
+  } else if (user.role === 'VILLAGE_ADMIN') {
+    // Village admins only see records from farms in their own village
+    const villageId = await getAdminVillageId(user.userId)
+    if (villageId) where.farm = { villageId }
+  }
   // Date range filter
   if (from || to) {
     where.date = {
@@ -47,6 +54,16 @@ export async function POST(request: NextRequest) {
     }
     const farm = await prisma.farm.findUnique({ where: { id: farmId }, include: { plantType: true } })
     if (!farm) return NextResponse.json({ error: 'Farm not found' }, { status: 404 })
+    // Make sure the user is allowed to record data for this farm
+    if (user.role === 'FARMER' && farm.ownerId !== user.userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    if (user.role === 'VILLAGE_ADMIN') {
+      const villageId = await getAdminVillageId(user.userId)
+      if (villageId && farm.villageId !== villageId) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
     const phStatus = getPhStatus(phValue, farm.plantType.minPH, farm.plantType.maxPH)
     const tdsStatus = getTdsStatus(tdsValue, farm.plantType.minTDS, farm.plantType.maxTDS)
     const record = await prisma.monitoringRecord.create({
