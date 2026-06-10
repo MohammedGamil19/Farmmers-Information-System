@@ -57,6 +57,10 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-500">
+          <p>Belum punya akun? <Link href="/register" className="text-green-600 font-medium hover:underline">Daftar di sini</Link></p>
+        </div>
+
+        <div className="mt-4 text-center text-sm text-gray-500">
           <p>Akun demo:</p>
           <p className="text-xs mt-1 text-gray-400">superadmin@hydro.id / password123</p>
         </div>
