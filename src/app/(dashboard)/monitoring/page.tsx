@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api'
 import { useAuth } from '@/lib/auth-context'
@@ -278,6 +278,8 @@ export default function MonitoringPage() {
   // Add modal state
   const [showAddModal,   setShowAddModal]   = useState(false)
   const [saving,         setSaving]         = useState(false)
+  const isSavingRef = useRef(false)
+  const isEditSavingRef = useRef(false)
   const [addStep,        setAddStep]        = useState<'form' | 'action'>('form')
   const [form,           setForm]           = useState({ ...EMPTY_FORM, farmId: initialFarmId })
   const [actionSelected, setActionSelected] = useState('')
@@ -351,6 +353,8 @@ export default function MonitoringPage() {
 
   // ── Actual API call (called from step 1 if normal, or step 2 after action pick) ──
   const doSave = async (actionTaken: string | null) => {
+    if (isSavingRef.current) return
+    isSavingRef.current = true
     setSaving(true)
     try {
       await api.post('/api/monitoring', {
@@ -371,6 +375,7 @@ export default function MonitoringPage() {
     } catch (err) {
       toast('error', err instanceof Error ? err.message : 'Gagal menyimpan')
     } finally {
+      isSavingRef.current = false
       setSaving(false)
     }
   }
@@ -389,7 +394,10 @@ export default function MonitoringPage() {
   }
 
   const handleEditSave = async (e: React.FormEvent) => {
-    e.preventDefault(); if (!editRecord) return; setEditSaving(true)
+    e.preventDefault(); if (!editRecord) return
+    if (isEditSavingRef.current) return
+    isEditSavingRef.current = true
+    setEditSaving(true)
     try {
       await api.put(`/api/monitoring/${editRecord.id}`, {
         phValue:     parseFloat(editForm.phValue),
@@ -403,7 +411,7 @@ export default function MonitoringPage() {
       toast('success', 'Data berhasil diperbarui'); setEditRecord(null); load()
     } catch (err) {
       toast('error', err instanceof Error ? err.message : 'Gagal')
-    } finally { setEditSaving(false) }
+    } finally { isEditSavingRef.current = false; setEditSaving(false) }
   }
 
   const handleDelete = (id: string, farmName: string) => {
