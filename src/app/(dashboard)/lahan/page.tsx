@@ -57,7 +57,10 @@ export default function LahanPage() {
   }
   useEffect(() => { if (user) load() }, [user])
 
-  const openNew = () => { setEditing(null); setForm(EMPTY_FORM); setShowModal(true) }
+  // Auto-populate villageId for non-SUPER_ADMIN when opening new form
+  const getDefaultVillageId = () => user?.village?.id || ''
+
+  const openNew = () => { setEditing(null); setForm({ ...EMPTY_FORM, villageId: getDefaultVillageId() }); setShowModal(true) }
   const openEdit = (l: Lahan) => {
     setEditing(l)
     setForm({ area: String(l.area), blockLocation: l.blockLocation || '', soilType: l.soilType || '', ownershipStatus: l.ownershipStatus, commodity: l.commodity || '', description: l.description || '', villageId: l.village.id, kelompokTaniId: l.kelompokTani?.id || '', ownerId: l.owner.id })
@@ -190,8 +193,12 @@ export default function LahanPage() {
           </div>
           <Input label="Komoditas yang Ditanam" value={form.commodity} onChange={e => setForm({ ...form, commodity: e.target.value })} placeholder="Padi, Jagung, Sayuran, dll" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
-              options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
+            {user?.role === 'SUPER_ADMIN' ? (
+              <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
+                options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
+            ) : (
+              <Input label="Desa" value={user?.village?.name || '-'} disabled />
+            )}
             <Select label="Kelompok Tani" value={form.kelompokTaniId} onChange={e => setForm({ ...form, kelompokTaniId: e.target.value })}
               options={[{ value: '', label: '-- Pilih Kelompok --' }, ...kelompoks.map(k => ({ value: k.id, label: k.name }))]} />
           </div>

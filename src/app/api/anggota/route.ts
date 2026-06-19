@@ -7,7 +7,7 @@ import { hashPassword } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   const user = getUserFromRequest(request)
-  if (!user || user.role === 'FARMER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(request.url)
   const kelompokId = searchParams.get('kelompokId')
@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
   if (user.role === 'VILLAGE_ADMIN') {
     const vid = await getAdminVillageId(user.userId)
     if (vid) where.villageId = vid
+  } else if (user.role === 'FARMER') {
+    const u = await prisma.user.findUnique({ where: { id: user.userId }, select: { villageId: true } })
+    if (u?.villageId) where.villageId = u.villageId
   }
   if (kelompokId) where.kelompokTaniId = kelompokId
   if (memberStatus) where.memberStatus = memberStatus

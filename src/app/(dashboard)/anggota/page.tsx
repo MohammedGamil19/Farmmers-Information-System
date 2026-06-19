@@ -50,20 +50,21 @@ export default function AnggotaPage() {
     if (filterKelompok) params.set('kelompokId', filterKelompok)
     if (filterStatus) params.set('memberStatus', filterStatus)
     if (search) params.set('search', search)
-    Promise.all([
+    const calls: Promise<unknown>[] = [
       api.get(`/api/anggota?${params}`),
       api.get('/api/kelompok-tani'),
-      api.get('/api/villages'),
-    ]).then(([m, k, v]) => {
-      setMembers(m.members)
-      setKelompoks(k.kelompoks)
-      setVillages(v.villages)
+    ]
+    if (user?.role !== 'FARMER') calls.push(api.get('/api/villages'))
+    Promise.all(calls).then(([m, k, v]) => {
+      setMembers((m as { members: Member[] }).members)
+      setKelompoks((k as { kelompoks: KelompokTani[] }).kelompoks)
+      if (v) setVillages((v as { villages: Village[] }).villages)
     }).finally(() => setLoading(false))
   }
 
   useEffect(() => { load() }, [filterKelompok, filterStatus])
 
-  const openNew = () => { setEditing(null); setForm(EMPTY_FORM); setShowModal(true) }
+  const openNew = () => { setEditing(null); setForm({ ...EMPTY_FORM, villageId: user?.village?.id || '' }); setShowModal(true) }
   const openEdit = (m: Member) => {
     setEditing(m)
     setForm({ name: m.name, email: m.email, password: '', phone: m.phone || '', nik: m.nik || '', address: m.address || '', rt: m.rt || '', rw: m.rw || '', villageId: m.village?.id || '', kelompokTaniId: m.kelompokTani?.id || '', memberStatus: m.memberStatus })
@@ -219,8 +220,12 @@ export default function AnggotaPage() {
             <Input label="No. HP" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="08xxxxxxxxxx" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Select label="Desa" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
-              options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
+            {user?.role === 'SUPER_ADMIN' ? (
+              <Select label="Desa" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
+                options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
+            ) : (
+              <Input label="Desa" value={user?.village?.name || '-'} disabled />
+            )}
             <Select label="Kelompok Tani" value={form.kelompokTaniId} onChange={e => setForm({ ...form, kelompokTaniId: e.target.value })}
               options={[{ value: '', label: '-- Pilih Kelompok --' }, ...kelompoks.map(k => ({ value: k.id, label: k.name }))]} />
           </div>

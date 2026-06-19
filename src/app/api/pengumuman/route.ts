@@ -9,7 +9,8 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { searchParams } = new URL(request.url)
   const limit = parseInt(searchParams.get('limit') || '20')
-  const where: Record<string, unknown> = { isPublished: true }
+  // Farmers and public only see published; admins see all (including drafts)
+  const where: Record<string, unknown> = user.role === 'FARMER' ? { isPublished: true } : {}
   if (user.role === 'VILLAGE_ADMIN') {
     const vid = await getAdminVillageId(user.userId)
     if (vid) where.villageId = vid

@@ -54,7 +54,7 @@ export default function KalenderPage() {
   }
   useEffect(() => { if (user) load() }, [user, filterCat])
 
-  const openNew = () => { setEditing(null); setForm(EMPTY_FORM); setShowModal(true) }
+  const openNew = () => { setEditing(null); setForm({ ...EMPTY_FORM, villageId: user?.village?.id || '' }); setShowModal(true) }
   const openEdit = (ev: CalendarEvent) => {
     setEditing(ev)
     setForm({
@@ -168,8 +168,12 @@ export default function KalenderPage() {
               options={Object.entries(CAT_LABELS).map(([v, l]) => ({ value: v, label: l }))} />
             <Input label="Lokasi" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} placeholder="Balai Desa / Lapangan" />
           </div>
-          <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
-            options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
+          {user?.role === 'SUPER_ADMIN' ? (
+            <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
+              options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
+          ) : (
+            <Input label="Desa" value={user?.village?.name || '-'} disabled />
+          )}
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setShowModal(false)} className="flex-1">Batal</Button>
             <Button type="submit" loading={saving} className="flex-1">Simpan</Button>

@@ -38,7 +38,7 @@ export default function KelompokTaniPage() {
   }
   useEffect(() => { if (user) load() }, [user])
 
-  const openNew = () => { setEditing(null); setForm(EMPTY_FORM); setShowModal(true) }
+  const openNew = () => { setEditing(null); setForm({ ...EMPTY_FORM, villageId: user?.village?.id || '' }); setShowModal(true) }
   const openEdit = (k: KelompokTani) => {
     setEditing(k)
     setForm({ name: k.name, description: k.description || '', villageId: k.village.id })
@@ -112,8 +112,12 @@ export default function KelompokTaniPage() {
             <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500" />
           </div>
-          <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
-            options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
+          {user?.role === 'SUPER_ADMIN' ? (
+            <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
+              options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
+          ) : (
+            <Input label="Desa" value={user?.village?.name || '-'} disabled />
+          )}
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setShowModal(false)} className="flex-1">Batal</Button>
             <Button type="submit" loading={saving} className="flex-1">Simpan</Button>

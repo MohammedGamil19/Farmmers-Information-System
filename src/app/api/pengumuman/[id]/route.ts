@@ -10,7 +10,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const body = await request.json()
   const ann = await prisma.announcement.update({
     where: { id },
-    data: { title: body.title, content: body.content, type: body.type, isPublished: body.isPublished },
+    data: {
+      title: body.title, content: body.content, type: body.type,
+      isPublished: body.isPublished,
+      publishedAt: body.isPublished ? new Date() : null,
+    },
     include: { author: { select: { id: true, name: true } }, village: { select: { id: true, name: true } } },
   })
   return NextResponse.json({ announcement: ann })
