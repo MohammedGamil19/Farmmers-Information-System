@@ -6,7 +6,8 @@ import { useAuth } from '@/lib/auth-context'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Leaf, FlaskConical, BarChart3, FileText,
-  Bell, User, Settings, LogOut, Menu, X, MapPin, Users, Sprout, Globe, Activity
+  Bell, User, Settings, LogOut, Menu, X, MapPin, Users, Sprout, Globe, Activity,
+  UserCheck, Layers, Megaphone, CalendarDays, UsersRound
 } from 'lucide-react'
 
 const navItems = [
@@ -18,6 +19,13 @@ const navItems = [
   { href: '/tanaman', icon: Sprout, label: 'Tanaman', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
   { href: '/analytics', icon: BarChart3, label: 'Analitik', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
   { href: '/reports', icon: FileText, label: 'Laporan', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
+  // GAPOKTAN
+  { href: '/anggota', icon: UserCheck, label: 'Data Anggota', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
+  { href: '/lahan', icon: Layers, label: 'Data Lahan', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
+  { href: '/pengumuman', icon: Megaphone, label: 'Pengumuman', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
+  { href: '/kalender', icon: CalendarDays, label: 'Kalender Kegiatan', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
+  { href: '/admin/kelompok-tani', icon: UsersRound, label: 'Kelompok Tani', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
+  // Admin
   { href: '/notifications', icon: Bell, label: 'Notifikasi', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
   { href: '/admin/users', icon: Users, label: 'Pengguna', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
   { href: '/admin/villages', icon: MapPin, label: 'Desa', roles: ['SUPER_ADMIN'] },

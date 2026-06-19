@@ -4,10 +4,13 @@ import { useAuth } from '@/lib/auth-context'
 import { api } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Users, Leaf, FlaskConical, TrendingUp, Bell, AlertTriangle, CheckCircle, Activity } from 'lucide-react'
+import { Users, Leaf, FlaskConical, TrendingUp, Bell, AlertTriangle, CheckCircle, Activity, Megaphone, CalendarDays, Layers } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
+
+type Announcement = { id: string; title: string; content: string; type: string; publishedAt?: string; author: { name: string }; village: { name: string } }
+type CalEvent = { id: string; title: string; startDate: string; category: string; location?: string; village: { name: string } }
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -15,17 +18,21 @@ export default function DashboardPage() {
   const [records, setRecords] = useState<Record<string, unknown>[]>([])
   const [notifications, setNotifications] = useState<Record<string, unknown>[]>([])
   const [farms, setFarms] = useState<Record<string, unknown>[]>([])
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [upcomingEvents, setUpcomingEvents] = useState<CalEvent[]>([])
+  const [gapoktanName, setGapoktanName] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Single combined API call instead of 3 separate requests
     api.get('/api/dashboard').then((data) => {
       setStats(data.stats)
       setRecords(data.records)
       setNotifications(data.notifications)
       setFarms(data.farms)
+      setAnnouncements(data.announcements || [])
+      setUpcomingEvents(data.upcomingEvents || [])
+      setGapoktanName(data.gapoktanName || null)
     }).finally(() => setLoading(false))
-    // Check stage advancement in background
     api.post('/api/farms/check-stages', {}).catch(() => {/* silent */})
   }, [])
 
@@ -45,13 +52,12 @@ export default function DashboardPage() {
 
   const unreadCount = notifications.filter((n: Record<string, unknown>) => !n.isRead).length
 
-  // Build stat cards depending on role
   const isFarmer = user?.role === 'FARMER'
-  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'VILLAGE_ADMIN'
 
   const statCards = [
-    // Only admins see total farmers
     !isFarmer && { label: 'Total Petani', value: stats.totalFarmers ?? '-', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+    !isFarmer && stats.totalMembers != null && { label: 'Anggota GAPOKTAN', value: stats.totalMembers, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    !isFarmer && stats.totalLahan != null && { label: 'Total Lahan', value: `${stats.totalLahan} ha`, icon: Layers, color: 'text-amber-600', bg: 'bg-amber-50' },
     { label: isFarmer ? 'Kebun Saya' : 'Total Kebun', value: stats.totalFarms ?? '-', icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: 'Kebun Aktif', value: stats.activeFarms ?? '-', icon: Leaf, color: 'text-green-600', bg: 'bg-green-50' },
     { label: 'Siap Panen', value: stats.readyForHarvest ?? '-', icon: CheckCircle, color: 'text-teal-600', bg: 'bg-teal-50' },
@@ -68,8 +74,14 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="mb-6">
+        {gapoktanName && (
+          <div className="mb-3 inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium">
+            <Leaf size={14} />
+            GAPOKTAN {gapoktanName}
+          </div>
+        )}
         <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
-          Selamat Datang, {user?.name}! 👋
+          Selamat Datang, {user?.name}!
         </h1>
         <p className="text-gray-500 text-sm">
           {isFarmer
@@ -154,6 +166,66 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* GAPOKTAN: Announcements & Events */}
+      {(announcements.length > 0 || upcomingEvents.length > 0) && (
+        <div className="grid lg:grid-cols-2 gap-6 mt-6">
+          {/* Announcements */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2"><Megaphone size={16} /> Pengumuman</CardTitle>
+                <Link href="/pengumuman" className="text-sm text-green-600 hover:underline">Lihat semua</Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {announcements.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">Tidak ada pengumuman</p>
+              ) : (
+                <div className="space-y-3">
+                  {announcements.map(a => (
+                    <div key={a.id} className="p-3 rounded-lg bg-green-50 border border-green-100">
+                      <p className="text-sm font-medium text-gray-800">{a.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{a.content}</p>
+                      <p className="text-xs text-gray-400 mt-1">{a.village.name} · {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('id-ID') : ''}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Upcoming Events */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2"><CalendarDays size={16} /> Kegiatan Mendatang</CardTitle>
+                <Link href="/kalender" className="text-sm text-green-600 hover:underline">Lihat semua</Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {upcomingEvents.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">Tidak ada kegiatan mendatang</p>
+              ) : (
+                <div className="space-y-3">
+                  {upcomingEvents.map(ev => (
+                    <div key={ev.id} className="flex gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
+                      <div className="text-center min-w-[40px]">
+                        <p className="text-lg font-bold text-blue-700 leading-none">{new Date(ev.startDate).getDate()}</p>
+                        <p className="text-xs text-blue-500">{new Date(ev.startDate).toLocaleDateString('id-ID', { month: 'short' })}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">{ev.title}</p>
+                        <p className="text-xs text-gray-500">{ev.village.name}{ev.location && ` · ${ev.location}`}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Recent Farms */}
       <Card className="mt-6">

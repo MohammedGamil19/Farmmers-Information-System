@@ -12,6 +12,12 @@ enum Role {
   FARMER
 }
 
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+}
+
 enum FarmStatus {
   ACTIVE
   GROWING
@@ -27,6 +33,12 @@ enum CropStage {
   HARVESTED
 }
 
+enum OwnershipStatus {
+  OWNED
+  RENTED
+  MORTGAGED
+}
+
 enum NotificationType {
   ABNORMAL_PH
   ABNORMAL_TDS
@@ -35,25 +47,49 @@ enum NotificationType {
   SYSTEM
 }
 
-model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(FARMER)
-  phone     String?
-  avatar    String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum AnnouncementType {
+  INFO
+  WARNING
+  EVENT
+}
 
-  villageId String?
-  village   Village? @relation(fields: [villageId], references: [id])
+enum EventCategory {
+  PLANTING
+  HARVEST
+  MEETING
+  TRAINING
+  OTHER
+}
+
+model User {
+  id           String       @id @default(cuid())
+  name         String
+  email        String       @unique
+  password     String
+  role         Role         @default(FARMER)
+  phone        String?
+  avatar       String?
+  nik          String?      @unique
+  address      String?
+  rt           String?
+  rw           String?
+  memberStatus MemberStatus @default(ACTIVE)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  villageId      String?
+  village        Village?      @relation(fields: [villageId], references: [id])
+  kelompokTaniId String?
+  kelompokTani   KelompokTani? @relation(fields: [kelompokTaniId], references: [id])
 
   farms             Farm[]
   monitoringRecords MonitoringRecord[]
   notifications     Notification[]
   plantTypes        PlantType[]
+  lahans            Lahan[]
+  announcements     Announcement[]
+  calendarEvents    CalendarEvent[]
 
   @@map("users")
 }
@@ -68,10 +104,31 @@ model Village {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  users User[]
-  farms Farm[]
+  users          User[]
+  farms          Farm[]
+  kelompokTanis  KelompokTani[]
+  lahans         Lahan[]
+  announcements  Announcement[]
+  calendarEvents CalendarEvent[]
 
   @@map("villages")
+}
+
+model KelompokTani {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  villageId String
+  village   Village @relation(fields: [villageId], references: [id])
+
+  members User[]
+  lahans  Lahan[]
+
+  @@map("kelompok_tani")
 }
 
 model PlantType {
@@ -122,6 +179,28 @@ model Farm {
   @@map("farms")
 }
 
+model Lahan {
+  id              String          @id @default(cuid())
+  area            Float
+  blockLocation   String?
+  soilType        String?
+  ownershipStatus OwnershipStatus @default(OWNED)
+  commodity       String?
+  description     String?
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  ownerId        String
+  owner          User          @relation(fields: [ownerId], references: [id])
+  villageId      String
+  village        Village       @relation(fields: [villageId], references: [id])
+  kelompokTaniId String?
+  kelompokTani   KelompokTani? @relation(fields: [kelompokTaniId], references: [id])
+
+  @@map("lahans")
+}
+
 model MonitoringRecord {
   id          String   @id @default(cuid())
   date        DateTime
@@ -158,6 +237,43 @@ model Notification {
   user   User   @relation(fields: [userId], references: [id])
 
   @@map("notifications")
+}
+
+model Announcement {
+  id          String           @id @default(cuid())
+  title       String
+  content     String
+  type        AnnouncementType @default(INFO)
+  isPublished Boolean          @default(true)
+  publishedAt DateTime         @default(now())
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  authorId  String
+  author    User    @relation(fields: [authorId], references: [id])
+  villageId String
+  village   Village @relation(fields: [villageId], references: [id])
+
+  @@map("announcements")
+}
+
+model CalendarEvent {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  category    EventCategory @default(OTHER)
+  location    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  villageId   String
+  village     Village @relation(fields: [villageId], references: [id])
+  createdById String
+  createdBy   User    @relation(fields: [createdById], references: [id])
+
+  @@map("calendar_events")
 }
 
 model SystemSetting {
