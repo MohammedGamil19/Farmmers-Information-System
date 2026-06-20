@@ -90,6 +90,7 @@ model User {
   lahans            Lahan[]
   announcements     Announcement[]
   calendarEvents    CalendarEvent[]
+  panens            Panen[]
 
   @@map("users")
 }
@@ -110,6 +111,7 @@ model Village {
   lahans         Lahan[]
   announcements  Announcement[]
   calendarEvents CalendarEvent[]
+  panens         Panen[]
 
   @@map("villages")
 }
@@ -197,6 +199,7 @@ model Lahan {
   village        Village       @relation(fields: [villageId], references: [id])
   kelompokTaniId String?
   kelompokTani   KelompokTani? @relation(fields: [kelompokTaniId], references: [id])
+  panens         Panen[]
 
   @@map("lahans")
 }
@@ -274,6 +277,27 @@ model CalendarEvent {
   createdBy   User    @relation(fields: [createdById], references: [id])
 
   @@map("calendar_events")
+}
+
+model Panen {
+  id            String   @id @default(cuid())
+  tanggalPanen  DateTime
+  komoditas     String
+  jumlahKg      Float
+  hargaJual     Float?
+  catatan       String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  petaniId  String
+  petani    User    @relation(fields: [petaniId], references: [id])
+  villageId String
+  village   Village @relation(fields: [villageId], references: [id])
+  lahanId   String?
+  lahan     Lahan?  @relation(fields: [lahanId], references: [id])
+
+  @@map("panens")
 }
 
 model SystemSetting {

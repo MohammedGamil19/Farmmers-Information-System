@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
   const notifWhere: Record<string, unknown> = { userId: user.userId }
   const memberWhere: Record<string, unknown> = { role: 'FARMER', isActive: true }
   const lahanWhere: Record<string, unknown> = { isActive: true }
+  const panenWhere: Record<string, unknown> = { isActive: true }
   const annWhere: Record<string, unknown> = { isPublished: true }
   const eventWhere: Record<string, unknown> = { startDate: { gte: now, lte: futureDate } }
 
@@ -28,6 +29,7 @@ export async function GET(request: NextRequest) {
     farmWhere.ownerId = user.userId
     recordWhere.farm = { ownerId: user.userId }
     lahanWhere.ownerId = user.userId
+    panenWhere.petaniId = user.userId
     const u = await prisma.user.findUnique({ where: { id: user.userId }, select: { villageId: true } })
     villageId = u?.villageId ?? null
   } else if (user.role === 'VILLAGE_ADMIN') {
@@ -37,6 +39,7 @@ export async function GET(request: NextRequest) {
       recordWhere.farm = { villageId }
       memberWhere.villageId = villageId
       lahanWhere.villageId = villageId
+      panenWhere.villageId = villageId
     }
   }
 
@@ -48,7 +51,7 @@ export async function GET(request: NextRequest) {
   const [
     records, totalFarms, activeFarms, totalFarmers, readyForHarvest,
     notifications, farms, totalMembers, lahanAgg, announcements, upcomingEvents,
-    gapoktanSetting,
+    gapoktanSetting, panenAgg, panenKomoditas,
   ] = await Promise.all([
     prisma.monitoringRecord.findMany({
       where: recordWhere,
@@ -98,6 +101,8 @@ export async function GET(request: NextRequest) {
       take: 3,
     }),
     prisma.systemSetting.findUnique({ where: { key: 'gapoktan_name' } }),
+    prisma.panen.aggregate({ where: panenWhere, _sum: { jumlahKg: true }, _count: true }),
+    prisma.panen.groupBy({ by: ['komoditas'], where: panenWhere, _sum: { jumlahKg: true }, orderBy: { _sum: { jumlahKg: 'desc' } }, take: 1 }),
   ])
 
   const avgPH  = records.length ? records.reduce((s, r) => s + r.phValue,  0) / records.length : 0
@@ -111,6 +116,9 @@ export async function GET(request: NextRequest) {
       totalMembers,
       totalLahan: Math.round((lahanAgg._sum.area ?? 0) * 100) / 100,
       totalLahanCount: lahanAgg._count,
+      totalProduksiKg: Math.round((panenAgg._sum.jumlahKg ?? 0) * 10) / 10,
+      totalPanen: panenAgg._count,
+      komoditasTerbanyak: panenKomoditas[0]?.komoditas ?? null,
       avgPH:  Math.round(avgPH  * 100) / 100,
       avgTDS: Math.round(avgTDS),
     },

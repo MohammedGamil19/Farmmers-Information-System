@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth-context'
 import { api } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Users, Leaf, FlaskConical, TrendingUp, Bell, AlertTriangle, CheckCircle, Activity, Megaphone, CalendarDays, Layers } from 'lucide-react'
+import { Users, Leaf, FlaskConical, TrendingUp, Bell, AlertTriangle, CheckCircle, Activity, Megaphone, CalendarDays, Layers, Wheat, Scale } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
@@ -61,6 +61,8 @@ export default function DashboardPage() {
     { label: isFarmer ? 'Kebun Saya' : 'Total Kebun', value: stats.totalFarms ?? '-', icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: 'Kebun Aktif', value: stats.activeFarms ?? '-', icon: Leaf, color: 'text-green-600', bg: 'bg-green-50' },
     { label: 'Siap Panen', value: stats.readyForHarvest ?? '-', icon: CheckCircle, color: 'text-teal-600', bg: 'bg-teal-50' },
+    !isFarmer && stats.totalProduksiKg != null && { label: 'Total Produksi', value: `${stats.totalProduksiKg} kg`, icon: Scale, color: 'text-green-700', bg: 'bg-green-50' },
+    !isFarmer && stats.komoditasTerbanyak && { label: 'Komoditas Terbanyak', value: stats.komoditasTerbanyak as string, icon: Wheat, color: 'text-yellow-600', bg: 'bg-yellow-50' },
     { label: 'Rata-rata pH', value: stats.avgPH != null ? Number(stats.avgPH).toFixed(1) : '-', icon: FlaskConical, color: 'text-purple-600', bg: 'bg-purple-50' },
     { label: 'Rata-rata TDS', value: stats.avgTDS != null ? `${stats.avgTDS} ppm` : '-', icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50' },
   ].filter(Boolean) as { label: string; value: string | number; icon: React.ElementType; color: string; bg: string }[]
