@@ -14,7 +14,7 @@ type CalEvent = { id: string; title: string; startDate: string; category: string
 
 export default function DashboardPage() {
   const { user } = useAuth()
-  const [stats, setStats] = useState<Record<string, number | null>>({})
+  const [stats, setStats] = useState<Record<string, number | string | null>>({})
   const [records, setRecords] = useState<Record<string, unknown>[]>([])
   const [notifications, setNotifications] = useState<Record<string, unknown>[]>([])
   const [farms, setFarms] = useState<Record<string, unknown>[]>([])

@@ -13,7 +13,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     data: {
       title: body.title, content: body.content, type: body.type,
       isPublished: body.isPublished,
-      publishedAt: body.isPublished ? new Date() : null,
+      publishedAt: body.isPublished ? new Date() : undefined,
     },
     include: { author: { select: { id: true, name: true } }, village: { select: { id: true, name: true } } },
   })
