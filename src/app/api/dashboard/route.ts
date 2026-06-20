@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
   const [
     records, totalFarms, activeFarms, totalFarmers, readyForHarvest,
     notifications, farms, totalMembers, lahanAgg, announcements, upcomingEvents,
-    gapoktanSetting, panenAgg, panenKomoditas,
+    gapoktanSetting, panenList,
   ] = await Promise.all([
     prisma.monitoringRecord.findMany({
       where: recordWhere,
@@ -101,12 +101,17 @@ export async function GET(request: NextRequest) {
       take: 3,
     }),
     prisma.systemSetting.findUnique({ where: { key: 'gapoktan_name' } }),
-    prisma.panen.aggregate({ where: panenWhere, _sum: { jumlahKg: true }, _count: true }),
-    prisma.panen.groupBy({ by: ['komoditas'], where: panenWhere, _sum: { jumlahKg: true }, orderBy: { _sum: { jumlahKg: 'desc' } }, take: 1 }),
+    prisma.panen.findMany({ where: panenWhere, select: { komoditas: true, jumlahKg: true } }),
   ])
 
   const avgPH  = records.length ? records.reduce((s, r) => s + r.phValue,  0) / records.length : 0
   const avgTDS = records.length ? records.reduce((s, r) => s + r.tdsValue, 0) / records.length : 0
+
+  // Compute panen stats from list (avoids groupBy compatibility issues with Neon HTTP adapter)
+  const totalProduksiKg = Math.round(panenList.reduce((s, p) => s + p.jumlahKg, 0) * 10) / 10
+  const komoditasMap: Record<string, number> = {}
+  panenList.forEach(p => { komoditasMap[p.komoditas] = (komoditasMap[p.komoditas] || 0) + p.jumlahKg })
+  const komoditasTerbanyak = Object.entries(komoditasMap).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
 
   return NextResponse.json({
     records, farms, notifications, announcements, upcomingEvents,
@@ -116,9 +121,9 @@ export async function GET(request: NextRequest) {
       totalMembers,
       totalLahan: Math.round((lahanAgg._sum.area ?? 0) * 100) / 100,
       totalLahanCount: lahanAgg._count,
-      totalProduksiKg: Math.round((panenAgg._sum.jumlahKg ?? 0) * 10) / 10,
-      totalPanen: panenAgg._count,
-      komoditasTerbanyak: panenKomoditas[0]?.komoditas ?? null,
+      totalProduksiKg,
+      totalPanen: panenList.length,
+      komoditasTerbanyak,
       avgPH:  Math.round(avgPH  * 100) / 100,
       avgTDS: Math.round(avgTDS),
     },
