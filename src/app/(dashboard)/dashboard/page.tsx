@@ -189,7 +189,7 @@ export default function DashboardPage() {
                     <div key={a.id} className="p-3 rounded-lg bg-green-50 border border-green-100">
                       <p className="text-sm font-medium text-gray-800">{a.title}</p>
                       <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{a.content}</p>
-                      <p className="text-xs text-gray-400 mt-1">{a.village.name} · {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('id-ID') : ''}</p>
+                      <p className="text-xs text-gray-400 mt-1">{a.village?.name} · {a.publishedAt ? new Date(a.publishedAt).toLocaleDateString('id-ID') : ''}</p>
                     </div>
                   ))}
                 </div>
@@ -218,7 +218,7 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-800">{ev.title}</p>
-                        <p className="text-xs text-gray-500">{ev.village.name}{ev.location && ` · ${ev.location}`}</p>
+                        <p className="text-xs text-gray-500">{ev.village?.name}{ev.location && ` · ${ev.location}`}</p>
                       </div>
                     </div>
                   ))}

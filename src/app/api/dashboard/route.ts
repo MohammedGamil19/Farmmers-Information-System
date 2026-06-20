@@ -90,13 +90,19 @@ export async function GET(request: NextRequest) {
     prisma.lahan.aggregate({ where: lahanWhere, _sum: { area: true }, _count: true }),
     prisma.announcement.findMany({
       where: annWhere,
-      include: { author: { select: { id: true, name: true } } },
+      include: {
+        author: { select: { id: true, name: true } },
+        village: { select: { id: true, name: true } },
+      },
       orderBy: { publishedAt: 'desc' },
       take: 3,
     }),
     prisma.calendarEvent.findMany({
       where: eventWhere,
-      include: { createdBy: { select: { id: true, name: true } } },
+      include: {
+        createdBy: { select: { id: true, name: true } },
+        village: { select: { id: true, name: true } },
+      },
       orderBy: { startDate: 'asc' },
       take: 3,
     }),
