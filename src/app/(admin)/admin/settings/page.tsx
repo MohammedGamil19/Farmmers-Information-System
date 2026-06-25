@@ -44,7 +44,7 @@ export default function AdminSettingsPage() {
         <CardContent>
           <div className="space-y-3 text-sm">
             {[
-              { label: 'Nama Aplikasi', value: 'Hydroponic pH & TDS Monitoring System' },
+              { label: 'Nama Aplikasi', value: 'Gapoktan Information System for Agricultural Harvest Production Data Documentation' },
               { label: 'Versi', value: '1.0.0' },
               { label: 'Framework', value: 'Next.js 15 + TypeScript + TailwindCSS' },
               { label: 'Database', value: 'PostgreSQL + Prisma ORM' },

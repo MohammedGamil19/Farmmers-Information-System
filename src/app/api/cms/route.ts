@@ -7,25 +7,25 @@ const CMS_KEYS = ['cms_hero', 'cms_about', 'cms_gallery', 'cms_features', 'cms_s
 
 const DEFAULTS: Record<string, unknown> = {
   cms_hero: {
-    title: 'Hydroponic pH & TDS Monitoring System',
-    subtitle: 'Membantu desa mendigitalisasi pertanian hidroponik melalui pemantauan cerdas dan keputusan berbasis data.',
+    title: 'Gapoktan Information System for Agricultural Harvest Production Data Documentation',
+    subtitle: 'Membantu GAPOKTAN mendigitalisasi pencatatan data hasil panen, keanggotaan, dan lahan pertanian secara terstruktur dan mudah diakses.',
     buttonText: 'Mulai Sekarang',
     images: [] as { id: string; url: string }[],
   },
   cms_about: {
     enabled: true,
-    title: 'Tentang Program Hidroponik Desa',
-    body: 'Program ini dikembangkan untuk membantu petani desa mengelola kebun hidroponik mereka secara digital. Dengan teknologi pemantauan modern, petani dapat memastikan tanaman tumbuh optimal setiap hari.',
+    title: 'Tentang Sistem Informasi GAPOKTAN',
+    body: 'Sistem ini dikembangkan untuk membantu GAPOKTAN mendokumentasikan data produksi hasil panen, keanggotaan, dan lahan pertanian secara digital dan terstruktur. Fitur pemantauan pH dan TDS hidroponik tetap tersedia sebagai dukungan tambahan bagi kebun yang membutuhkannya.',
     image: '',
   },
   cms_gallery: [],
   cms_features: [
-    { icon: 'FlaskConical', title: 'Monitor pH & TDS', desc: 'Catat dan pantau nilai pH dan TDS setiap hari secara real-time dengan validasi otomatis.' },
-    { icon: 'BarChart3', title: 'Analitik Canggih', desc: 'Grafik tren pH dan TDS, analisis pertumbuhan tanaman, dan performa panen.' },
-    { icon: 'Bell', title: 'Notifikasi Pintar', desc: 'Peringatan otomatis saat nilai pH/TDS tidak normal atau panen akan tiba.' },
-    { icon: 'CheckCircle', title: 'Rekomendasi Otomatis', desc: 'Saran perbaikan otomatis berdasarkan nilai pH dan TDS yang terdeteksi.' },
+    { icon: 'Leaf', title: 'Dokumentasi Data Panen', desc: 'Catat dan kelola data hasil panen, komoditas, jumlah produksi, dan nilai jual secara digital dan terstruktur.' },
+    { icon: 'Users', title: 'Manajemen Data GAPOKTAN', desc: 'Kelola data anggota, lahan, dan kelompok tani dalam satu platform terpadu.' },
+    { icon: 'BarChart3', title: 'Analitik Produksi', desc: 'Pantau tren produksi panen dan performa pertanian dari waktu ke waktu.' },
+    { icon: 'Bell', title: 'Notifikasi & Pengumuman', desc: 'Informasi kegiatan dan pengumuman GAPOKTAN tersampaikan secara real-time.' },
     { icon: 'Shield', title: 'Manajemen Peran', desc: 'Akses terpisah untuk Super Admin, Admin Desa, dan Petani.' },
-    { icon: 'Leaf', title: 'Lacak Siklus Panen', desc: 'Pantau dari persemaian hingga panen dengan timeline visual yang lengkap.' },
+    { icon: 'FlaskConical', title: 'Monitor pH & TDS (Fitur Pendukung)', desc: 'Fitur tambahan untuk memantau kualitas nutrisi hidroponik bagi kebun yang membutuhkannya.' },
   ],
   cms_show_stats: true,
   cms_credits: {

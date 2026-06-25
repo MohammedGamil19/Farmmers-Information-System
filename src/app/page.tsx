@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Leaf, BarChart3, Bell, Shield, CheckCircle, FlaskConical, Users, MapPin, Activity } from 'lucide-react'
+import { Leaf, BarChart3, Bell, Shield, CheckCircle, FlaskConical, Users, MapPin, Wheat } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { HeroSlider } from '@/components/hero-slider'
 import { LandingNavbar } from '@/components/landing-navbar'
@@ -10,25 +10,25 @@ import { LandingNavbar } from '@/components/landing-navbar'
 
 const CMS_DEFAULTS = {
   cms_hero: {
-    title: 'Hydroponic pH & TDS Monitoring System',
-    subtitle: 'Membantu desa mendigitalisasi pertanian hidroponik melalui pemantauan cerdas dan keputusan berbasis data.',
+    title: 'Gapoktan Information System for Agricultural Harvest Production Data Documentation',
+    subtitle: 'Membantu GAPOKTAN mendigitalisasi pencatatan data hasil panen, keanggotaan, dan lahan pertanian secara terstruktur dan mudah diakses.',
     buttonText: 'Mulai Sekarang',
     images: [] as { id: string; url: string }[],
   },
   cms_about: {
     enabled: true,
-    title: 'Tentang Program Hidroponik Desa',
-    body: 'Program ini dikembangkan untuk membantu petani desa mengelola kebun hidroponik mereka secara digital. Dengan teknologi pemantauan modern, petani dapat memastikan tanaman tumbuh optimal setiap hari.',
+    title: 'Tentang Sistem Informasi GAPOKTAN',
+    body: 'Sistem ini dikembangkan untuk membantu GAPOKTAN mendokumentasikan data produksi hasil panen, keanggotaan, dan lahan pertanian secara digital dan terstruktur. Fitur pemantauan pH dan TDS hidroponik tetap tersedia sebagai dukungan tambahan bagi kebun yang membutuhkannya.',
     image: '',
   },
   cms_gallery: [] as { url: string; caption: string }[],
   cms_features: [
-    { icon: 'FlaskConical', title: 'Monitor pH & TDS', desc: 'Catat dan pantau nilai pH dan TDS setiap hari secara real-time dengan validasi otomatis.' },
-    { icon: 'BarChart3', title: 'Analitik Canggih', desc: 'Grafik tren pH dan TDS, analisis pertumbuhan tanaman, dan performa panen.' },
-    { icon: 'Bell', title: 'Notifikasi Pintar', desc: 'Peringatan otomatis saat nilai pH/TDS tidak normal atau panen akan tiba.' },
-    { icon: 'CheckCircle', title: 'Rekomendasi Otomatis', desc: 'Saran perbaikan otomatis berdasarkan nilai pH dan TDS yang terdeteksi.' },
+    { icon: 'Leaf', title: 'Dokumentasi Data Panen', desc: 'Catat dan kelola data hasil panen, komoditas, jumlah produksi, dan nilai jual secara digital dan terstruktur.' },
+    { icon: 'Users', title: 'Manajemen Data GAPOKTAN', desc: 'Kelola data anggota, lahan, dan kelompok tani dalam satu platform terpadu.' },
+    { icon: 'BarChart3', title: 'Analitik Produksi', desc: 'Pantau tren produksi panen dan performa pertanian dari waktu ke waktu.' },
+    { icon: 'Bell', title: 'Notifikasi & Pengumuman', desc: 'Informasi kegiatan dan pengumuman GAPOKTAN tersampaikan secara real-time.' },
     { icon: 'Shield', title: 'Manajemen Peran', desc: 'Akses terpisah untuk Super Admin, Admin Desa, dan Petani.' },
-    { icon: 'Leaf', title: 'Lacak Siklus Panen', desc: 'Pantau dari persemaian hingga panen dengan timeline visual yang lengkap.' },
+    { icon: 'FlaskConical', title: 'Monitor pH & TDS (Fitur Pendukung)', desc: 'Fitur tambahan untuk memantau kualitas nutrisi hidroponik bagi kebun yang membutuhkannya.' },
   ] as { icon: string; title: string; desc: string }[],
   cms_show_stats: true,
   cms_credits: {
@@ -47,7 +47,7 @@ const CMS_DEFAULTS = {
 }
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  FlaskConical, BarChart3, Bell, CheckCircle, Shield, Leaf,
+  FlaskConical, BarChart3, Bell, CheckCircle, Shield, Leaf, Users,
 }
 
 function GalleryCard({ img, className }: { img: { url: string; caption: string }; className?: string }) {
@@ -80,15 +80,15 @@ async function getCms() {
 
 async function getLiveStats() {
   try {
-    const [farms, farmers, villages, records] = await Promise.all([
+    const [farms, farmers, villages, panenCount] = await Promise.all([
       prisma.farm.count({ where: { isActive: true } }),
       prisma.user.count({ where: { role: 'FARMER', isActive: true } }),
       prisma.village.count({ where: { isActive: true } }),
-      prisma.monitoringRecord.count(),
+      prisma.panen.count({ where: { isActive: true } }),
     ])
-    return { farms, farmers, villages, records }
+    return { farms, farmers, villages, panenCount }
   } catch {
-    return { farms: 0, farmers: 0, villages: 0, records: 0 }
+    return { farms: 0, farmers: 0, villages: 0, panenCount: 0 }
   }
 }
 
@@ -124,10 +124,10 @@ export default async function HomePage() {
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
-                { icon: Leaf,     label: 'Kebun Aktif',         value: stats.farms,                      color: 'text-green-600',  bg: 'bg-green-50'  },
+                { icon: Wheat,    label: 'Catatan Panen',       value: stats.panenCount.toLocaleString('id'), color: 'text-amber-600',  bg: 'bg-amber-50'  },
                 { icon: Users,    label: 'Petani Terdaftar',    value: stats.farmers,                    color: 'text-blue-600',   bg: 'bg-blue-50'   },
                 { icon: MapPin,   label: 'Desa Binaan',         value: stats.villages,                   color: 'text-purple-600', bg: 'bg-purple-50' },
-                { icon: Activity, label: 'Catatan Monitoring',  value: stats.records.toLocaleString('id'), color: 'text-orange-600', bg: 'bg-orange-50' },
+                { icon: Leaf,     label: 'Kebun Aktif',         value: stats.farms,                      color: 'text-green-600',  bg: 'bg-green-50'  },
               ].map((s, i) => (
                 <div key={i} className="text-center p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                   <div className={`w-12 h-12 ${s.bg} rounded-xl flex items-center justify-center mx-auto mb-3`}>
@@ -176,7 +176,7 @@ export default async function HomePage() {
               <div className="inline-block bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
                 Galeri
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800">Kebun Hidroponik Kami</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800">Galeri Kegiatan GAPOKTAN</h2>
             </div>
             {gallery.length === 1 && (
               <GalleryCard img={gallery[0]} className="max-w-2xl mx-auto aspect-[16/9]" />
@@ -234,7 +234,7 @@ export default async function HomePage() {
               Fitur
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800">Fitur Unggulan</h2>
-            <p className="text-gray-500 mt-3 max-w-xl mx-auto">Semua yang dibutuhkan petani modern untuk mengelola kebun hidroponik secara digital</p>
+            <p className="text-gray-500 mt-3 max-w-xl mx-auto">Semua yang dibutuhkan GAPOKTAN untuk mendokumentasikan data panen dan mengelola pertanian secara digital</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => {
@@ -385,9 +385,9 @@ export default async function HomePage() {
           <div className="w-6 h-6 bg-green-700 rounded flex items-center justify-center">
             <Leaf className="text-white" size={12} />
           </div>
-          <span className="text-white font-semibold">Hydro Monitor</span>
+          <span className="text-white font-semibold">SI Panen GAPOKTAN</span>
         </div>
-        <p>© 2026 Hydroponic pH &amp; TDS Monitoring System. Untuk kemajuan pertanian desa Indonesia.</p>
+        <p>© 2026 Gapoktan Information System for Agricultural Harvest Production Data Documentation. Untuk kemajuan pertanian desa Indonesia.</p>
       </footer>
     </div>
   )

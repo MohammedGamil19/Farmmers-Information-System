@@ -26,7 +26,7 @@ export function LandingNavbar() {
         <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 ${scrolled ? 'bg-white/20' : 'bg-black/20'}`}>
           <Leaf size={18} className="text-white" />
         </div>
-        <span className="font-bold text-lg text-white drop-shadow">Hydro Monitor</span>
+        <span className="font-bold text-lg text-white drop-shadow">SI Panen GAPOKTAN</span>
       </div>
 
       {/* CTA */}

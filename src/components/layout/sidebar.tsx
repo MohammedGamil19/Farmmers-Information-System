@@ -12,20 +12,21 @@ import {
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/farms', icon: Leaf, label: 'Kebun Saya', roles: ['FARMER'] },
-  { href: '/farms', icon: Leaf, label: 'Semua Kebun', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
-  { href: '/monitoring', icon: FlaskConical, label: 'Monitoring', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/simulasi', icon: Activity, label: 'Monitor Pusat', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/tanaman', icon: Sprout, label: 'Tanaman', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/analytics', icon: BarChart3, label: 'Analitik', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/reports', icon: FileText, label: 'Laporan', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
-  // GAPOKTAN
+  // GAPOKTAN — primary focus: harvest production data documentation
+  { href: '/panen', icon: Wheat, label: 'Data Panen', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
   { href: '/anggota', icon: UserCheck, label: 'Data Anggota', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
   { href: '/lahan', icon: Layers, label: 'Data Lahan', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/panen', icon: Wheat, label: 'Data Panen', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
+  { href: '/admin/kelompok-tani', icon: UsersRound, label: 'Kelompok Tani', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
   { href: '/pengumuman', icon: Megaphone, label: 'Pengumuman', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
   { href: '/kalender', icon: CalendarDays, label: 'Kalender Kegiatan', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/admin/kelompok-tani', icon: UsersRound, label: 'Kelompok Tani', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
+  { href: '/analytics', icon: BarChart3, label: 'Analitik', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
+  { href: '/reports', icon: FileText, label: 'Laporan', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
+  { href: '/farms', icon: Leaf, label: 'Kebun Saya', roles: ['FARMER'] },
+  { href: '/farms', icon: Leaf, label: 'Semua Kebun', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
+  // Hydroponic pH/TDS monitoring — now a supporting feature, not the headline
+  { href: '/monitoring', icon: FlaskConical, label: 'Monitoring pH/TDS', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
+  { href: '/simulasi', icon: Activity, label: 'Monitor Pusat', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
+  { href: '/tanaman', icon: Sprout, label: 'Tanaman', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
   // Admin
   { href: '/notifications', icon: Bell, label: 'Notifikasi', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
   { href: '/admin/users', icon: Users, label: 'Pengguna', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
@@ -49,8 +50,8 @@ export function Sidebar() {
             <Leaf className="text-white" size={22} />
           </div>
           <div>
-            <p className="text-white font-bold text-sm leading-tight">Hydro Monitor</p>
-            <p className="text-green-300 text-xs">pH & TDS System</p>
+            <p className="text-white font-bold text-sm leading-tight">SI Panen GAPOKTAN</p>
+            <p className="text-green-300 text-xs">Dokumentasi Data Panen</p>
           </div>
         </div>
       </div>
@@ -92,7 +93,7 @@ export function Sidebar() {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-green-700 flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
           <Leaf className="text-white" size={20} />
-          <span className="text-white font-bold text-sm">Hydro Monitor</span>
+          <span className="text-white font-bold text-sm">SI Panen GAPOKTAN</span>
         </div>
         <button onClick={() => setOpen(!open)} className="text-white p-1">
           {open ? <X size={22} /> : <Menu size={22} />}
