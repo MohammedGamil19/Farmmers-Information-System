@@ -9,13 +9,12 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const since = new Date()
-  since.setDate(since.getDate() - 14)
+  since.setDate(since.getDate() - 30)
   const now = new Date()
   const futureDate = new Date()
   futureDate.setDate(futureDate.getDate() + 60)
 
   const farmWhere: Record<string, unknown> = { isActive: true }
-  const recordWhere: Record<string, unknown> = { date: { gte: since } }
   const notifWhere: Record<string, unknown> = { userId: user.userId }
   const memberWhere: Record<string, unknown> = { role: 'FARMER', isActive: true }
   const lahanWhere: Record<string, unknown> = { isActive: true }
@@ -27,7 +26,6 @@ export async function GET(request: NextRequest) {
 
   if (user.role === 'FARMER') {
     farmWhere.ownerId = user.userId
-    recordWhere.farm = { ownerId: user.userId }
     lahanWhere.ownerId = user.userId
     panenWhere.petaniId = user.userId
     const u = await prisma.user.findUnique({ where: { id: user.userId }, select: { villageId: true } })
@@ -36,7 +34,6 @@ export async function GET(request: NextRequest) {
     villageId = await getAdminVillageId(user.userId)
     if (villageId) {
       farmWhere.villageId = villageId
-      recordWhere.farm = { villageId }
       memberWhere.villageId = villageId
       lahanWhere.villageId = villageId
       panenWhere.villageId = villageId
@@ -49,18 +46,10 @@ export async function GET(request: NextRequest) {
   }
 
   const [
-    records, totalFarms, activeFarms, totalFarmers, readyForHarvest,
+    totalFarms, activeFarms, totalFarmers, readyForHarvest,
     notifications, farms, totalMembers, lahanAgg, announcements, upcomingEvents,
-    gapoktanSetting, panenList,
+    gapoktanSetting, panenList, recentPanens,
   ] = await Promise.all([
-    prisma.monitoringRecord.findMany({
-      where: recordWhere,
-      orderBy: { date: 'asc' },
-      select: {
-        date: true, phValue: true, tdsValue: true, phStatus: true, tdsStatus: true,
-        farm: { select: { id: true, name: true, plantType: { select: { name: true, minPH: true, maxPH: true, minTDS: true, maxTDS: true } } } },
-      },
-    }),
     prisma.farm.count({ where: farmWhere }),
     prisma.farm.count({ where: { ...farmWhere, status: { in: ['ACTIVE', 'GROWING'] } } }),
     user.role === 'SUPER_ADMIN'
@@ -79,13 +68,11 @@ export async function GET(request: NextRequest) {
         id: true, name: true, status: true, cropStage: true, plantingDate: true, estimatedHarvest: true,
         owner: { select: { id: true, name: true } },
         village: { select: { id: true, name: true } },
-        plantType: { select: { id: true, name: true, growthDays: true, minPH: true, maxPH: true, minTDS: true, maxTDS: true } },
-        monitoringRecords: { orderBy: [{ date: 'desc' }, { createdAt: 'desc' }], take: 3,
-          select: { id: true, date: true, phValue: true, tdsValue: true, phStatus: true, tdsStatus: true, temperature: true } },
+        plantType: { select: { id: true, name: true, growthDays: true } },
       },
       orderBy: { createdAt: 'desc' },
+      take: 5,
     }),
-    // GAPOKTAN stats
     prisma.user.count({ where: memberWhere }),
     prisma.lahan.aggregate({ where: lahanWhere, _sum: { area: true }, _count: true }),
     prisma.announcement.findMany({
@@ -107,20 +94,42 @@ export async function GET(request: NextRequest) {
       take: 3,
     }),
     prisma.systemSetting.findUnique({ where: { key: 'gapoktan_name' } }),
-    prisma.panen.findMany({ where: panenWhere, select: { komoditas: true, jumlahKg: true } }),
+    // All harvest records within the last 30 days for chart + aggregation
+    prisma.panen.findMany({
+      where: { ...panenWhere, tanggalPanen: { gte: since } },
+      select: { tanggalPanen: true, jumlahKg: true, plantType: { select: { name: true } } },
+      orderBy: { tanggalPanen: 'asc' },
+    }),
+    // Most recent harvests for the table
+    prisma.panen.findMany({
+      where: panenWhere,
+      select: {
+        id: true, tanggalPanen: true, komoditas: true, jumlahKg: true,
+        farm: { select: { id: true, name: true } },
+        petani: { select: { id: true, name: true } },
+      },
+      orderBy: { tanggalPanen: 'desc' },
+      take: 5,
+    }),
   ])
 
-  const avgPH  = records.length ? records.reduce((s, r) => s + r.phValue,  0) / records.length : 0
-  const avgTDS = records.length ? records.reduce((s, r) => s + r.tdsValue, 0) / records.length : 0
+  // Harvest time series (kg per day)
+  const byDay: Record<string, number> = {}
+  for (const p of panenList) {
+    const day = p.tanggalPanen.toISOString().split('T')[0]
+    byDay[day] = (byDay[day] || 0) + p.jumlahKg
+  }
+  const harvestSeries = Object.entries(byDay).map(([date, kg]) => ({ date, kg: Math.round(kg * 10) / 10 }))
 
-  // Compute panen stats from list (avoids groupBy compatibility issues with Neon HTTP adapter)
-  const totalProduksiKg = Math.round(panenList.reduce((s, p) => s + p.jumlahKg, 0) * 10) / 10
+  // Totals across ALL harvest (not just last 30 days) for the headline stats
+  const allPanen = await prisma.panen.findMany({ where: panenWhere, select: { komoditas: true, jumlahKg: true } })
+  const totalProduksiKg = Math.round(allPanen.reduce((s, p) => s + p.jumlahKg, 0) * 10) / 10
   const komoditasMap: Record<string, number> = {}
-  panenList.forEach(p => { komoditasMap[p.komoditas] = (komoditasMap[p.komoditas] || 0) + p.jumlahKg })
+  allPanen.forEach(p => { komoditasMap[p.komoditas] = (komoditasMap[p.komoditas] || 0) + p.jumlahKg })
   const komoditasTerbanyak = Object.entries(komoditasMap).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
 
   return NextResponse.json({
-    records, farms, notifications, announcements, upcomingEvents,
+    farms, notifications, announcements, upcomingEvents, recentPanens, harvestSeries,
     gapoktanName: gapoktanSetting?.value ?? null,
     stats: {
       totalFarms, activeFarms, totalFarmers, readyForHarvest,
@@ -128,10 +137,8 @@ export async function GET(request: NextRequest) {
       totalLahan: Math.round((lahanAgg._sum.area ?? 0) * 100) / 100,
       totalLahanCount: lahanAgg._count,
       totalProduksiKg,
-      totalPanen: panenList.length,
+      totalPanen: allPanen.length,
       komoditasTerbanyak,
-      avgPH:  Math.round(avgPH  * 100) / 100,
-      avgTDS: Math.round(avgTDS),
     },
   })
 }

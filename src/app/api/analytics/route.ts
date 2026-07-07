@@ -10,50 +10,74 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const farmId = searchParams.get('farmId')
-  const days = parseInt(searchParams.get('days') || '30')
+  const days = parseInt(searchParams.get('days') || '90')
 
   const since = new Date()
   since.setDate(since.getDate() - days)
 
-  const recordWhere: Record<string, unknown> = { date: { gte: since } }
-  const farmWhere:   Record<string, unknown> = { isActive: true }
-
-  if (farmId) recordWhere.farmId = farmId
+  const where: Record<string, unknown> = { isActive: true, tanggalPanen: { gte: since } }
+  if (farmId) where.farmId = farmId
 
   if (user.role === 'FARMER') {
-    recordWhere.farm = { ownerId: user.userId }
-    farmWhere.ownerId = user.userId
+    where.petaniId = user.userId
   } else if (user.role === 'VILLAGE_ADMIN') {
     const villageId = await getAdminVillageId(user.userId)
-    if (villageId) {
-      recordWhere.farm = { villageId }
-      farmWhere.villageId = villageId
-    }
+    if (villageId) where.villageId = villageId
   }
 
-  const [records, totalFarms, activeFarms, totalFarmers, readyForHarvest] = await Promise.all([
-    prisma.monitoringRecord.findMany({
-      where: recordWhere,
-      orderBy: { date: 'asc' },
-      select: {
-        date: true, phValue: true, tdsValue: true, phStatus: true, tdsStatus: true,
-        farm: { select: { id: true, name: true, plantType: { select: { name: true, minPH: true, maxPH: true, minTDS: true, maxTDS: true } } } },
-      },
-    }),
-    prisma.farm.count({ where: farmWhere }),
-    prisma.farm.count({ where: { ...farmWhere, status: { in: ['ACTIVE', 'GROWING'] } } }),
-    user.role === 'SUPER_ADMIN'
-      ? prisma.user.count({ where: { role: 'FARMER', isActive: true } })
-      : Promise.resolve(null),
-    prisma.farm.count({ where: { ...farmWhere, status: 'READY_FOR_HARVEST' } }),
-  ])
+  const panens = await prisma.panen.findMany({
+    where,
+    select: {
+      tanggalPanen: true,
+      jumlahKg: true,
+      hargaJual: true,
+      farm: { select: { id: true, name: true } },
+      plantType: { select: { id: true, name: true } },
+    },
+    orderBy: { tanggalPanen: 'asc' },
+  })
 
-  const avgPH  = records.length ? records.reduce((s, r) => s + r.phValue,  0) / records.length : 0
-  const avgTDS = records.length ? records.reduce((s, r) => s + r.tdsValue, 0) / records.length : 0
+  // Time series: kg per day
+  const byDay: Record<string, number> = {}
+  for (const p of panens) {
+    const day = p.tanggalPanen.toISOString().split('T')[0]
+    byDay[day] = (byDay[day] || 0) + p.jumlahKg
+  }
+  const timeSeries = Object.entries(byDay).map(([date, kg]) => ({ date, kg: Math.round(kg * 10) / 10 }))
+
+  // kg per garden
+  const byFarm: Record<string, { name: string; kg: number }> = {}
+  for (const p of panens) {
+    if (!byFarm[p.farm.id]) byFarm[p.farm.id] = { name: p.farm.name, kg: 0 }
+    byFarm[p.farm.id].kg += p.jumlahKg
+  }
+  const perGarden = Object.values(byFarm)
+    .map(v => ({ name: v.name, kg: Math.round(v.kg * 10) / 10 }))
+    .sort((a, b) => b.kg - a.kg)
+
+  // kg per plant type
+  const byPlant: Record<string, { name: string; kg: number }> = {}
+  for (const p of panens) {
+    if (!byPlant[p.plantType.id]) byPlant[p.plantType.id] = { name: p.plantType.name, kg: 0 }
+    byPlant[p.plantType.id].kg += p.jumlahKg
+  }
+  const perPlantType = Object.values(byPlant)
+    .map(v => ({ name: v.name, kg: Math.round(v.kg * 10) / 10 }))
+    .sort((a, b) => b.kg - a.kg)
+
+  const totalKg = panens.reduce((s, p) => s + p.jumlahKg, 0)
+  const totalValue = panens.reduce((s, p) => s + (p.hargaJual ? p.jumlahKg * p.hargaJual : 0), 0)
 
   return NextResponse.json({
-    records,
-    stats: { totalFarms, activeFarms, totalFarmers, readyForHarvest,
-      avgPH: Math.round(avgPH * 100) / 100, avgTDS: Math.round(avgTDS) },
+    timeSeries,
+    perGarden,
+    perPlantType,
+    stats: {
+      totalKg: Math.round(totalKg * 10) / 10,
+      totalPanen: panens.length,
+      avgKg: panens.length ? Math.round((totalKg / panens.length) * 10) / 10 : 0,
+      totalValue: Math.round(totalValue),
+      topPlantType: perPlantType[0]?.name ?? null,
+    },
   })
 }

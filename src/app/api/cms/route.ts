@@ -7,7 +7,7 @@ const CMS_KEYS = ['cms_hero', 'cms_about', 'cms_gallery', 'cms_features', 'cms_s
 
 const DEFAULTS: Record<string, unknown> = {
   cms_hero: {
-    title: 'Gapoktan Information System for Agricultural Harvest Production Data Documentation',
+    title: 'Sistem Informasi Dokumentasi Data Produksi Hasil Panen Pertanian',
     subtitle: 'Membantu GAPOKTAN mendigitalisasi pencatatan data hasil panen, keanggotaan, dan lahan pertanian secara terstruktur dan mudah diakses.',
     buttonText: 'Mulai Sekarang',
     images: [] as { id: string; url: string }[],
@@ -15,7 +15,7 @@ const DEFAULTS: Record<string, unknown> = {
   cms_about: {
     enabled: true,
     title: 'Tentang Sistem Informasi GAPOKTAN',
-    body: 'Sistem ini dikembangkan untuk membantu GAPOKTAN mendokumentasikan data produksi hasil panen, keanggotaan, dan lahan pertanian secara digital dan terstruktur. Fitur pemantauan pH dan TDS hidroponik tetap tersedia sebagai dukungan tambahan bagi kebun yang membutuhkannya.',
+    body: 'Sistem ini dikembangkan untuk membantu GAPOKTAN mendokumentasikan data produksi hasil panen, keanggotaan, dan lahan pertanian secara digital dan terstruktur, sehingga produktivitas setiap kebun dan jenis tanaman dapat dipantau dengan mudah.',
     image: '',
   },
   cms_gallery: [],
@@ -25,7 +25,7 @@ const DEFAULTS: Record<string, unknown> = {
     { icon: 'BarChart3', title: 'Analitik Produksi', desc: 'Pantau tren produksi panen dan performa pertanian dari waktu ke waktu.' },
     { icon: 'Bell', title: 'Notifikasi & Pengumuman', desc: 'Informasi kegiatan dan pengumuman GAPOKTAN tersampaikan secara real-time.' },
     { icon: 'Shield', title: 'Manajemen Peran', desc: 'Akses terpisah untuk Super Admin, Admin Desa, dan Petani.' },
-    { icon: 'FlaskConical', title: 'Monitor pH & TDS (Fitur Pendukung)', desc: 'Fitur tambahan untuk memantau kualitas nutrisi hidroponik bagi kebun yang membutuhkannya.' },
+    { icon: 'FileText', title: 'Laporan & Ekspor Data', desc: 'Ekspor laporan produksi panen ke Excel dan PDF untuk keperluan pelaporan program.' },
   ],
   cms_show_stats: true,
   cms_credits: {

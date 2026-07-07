@@ -44,9 +44,9 @@ export default function AdminSettingsPage() {
         <CardContent>
           <div className="space-y-3 text-sm">
             {[
-              { label: 'Nama Aplikasi', value: 'Gapoktan Information System for Agricultural Harvest Production Data Documentation' },
-              { label: 'Versi', value: '1.0.0' },
-              { label: 'Framework', value: 'Next.js 15 + TypeScript + TailwindCSS' },
+              { label: 'Nama Aplikasi', value: 'Sistem Informasi Dokumentasi Data Produksi Hasil Panen Pertanian' },
+              { label: 'Versi', value: '2.0.0' },
+              { label: 'Framework', value: 'Next.js 16 + TypeScript + TailwindCSS' },
               { label: 'Database', value: 'PostgreSQL + Prisma ORM' },
               { label: 'Autentikasi', value: 'JWT + Role-Based Access Control' },
               { label: 'Charts', value: 'Recharts' },

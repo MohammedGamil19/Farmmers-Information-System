@@ -136,7 +136,7 @@ export function HeroSlider({ title, subtitle, buttonText, images }: Props) {
       {/* ── Content ── */}
       <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-white text-center pointer-events-none">
         <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm mb-6 font-medium border border-white/20 pointer-events-none">
-          🌿 Sistem Monitoring Hidroponik Desa
+          🌿 Sistem Informasi Dokumentasi Panen GAPOKTAN
         </div>
         <h1 className="text-4xl md:text-6xl font-extrabold mb-5 leading-tight drop-shadow-xl">
           {title}

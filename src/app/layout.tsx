@@ -7,8 +7,8 @@ import { Toaster } from '@/components/ui/toaster'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Gapoktan Information System for Agricultural Harvest Production Data Documentation',
-  description: 'Sistem Informasi GAPOKTAN untuk Dokumentasi Data Produksi Hasil Panen Pertanian',
+  title: 'Sistem Informasi Dokumentasi Data Produksi Hasil Panen Pertanian',
+  description: 'Sistem Informasi Dokumentasi Data Produksi Hasil Panen Pertanian untuk GAPOKTAN',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

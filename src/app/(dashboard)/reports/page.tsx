@@ -7,38 +7,50 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { toast } from '@/components/ui/toaster'
 import { FileText, FileSpreadsheet, Filter, CalendarRange } from 'lucide-react'
-import { formatDate, formatDateTime } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 
-// Quick-range presets
 const PRESETS = [
-  { label: '7 Hari', days: 7 },
   { label: '30 Hari', days: 30 },
   { label: '3 Bulan', days: 90 },
+  { label: '1 Tahun', days: 365 },
   { label: 'Semua', days: 0 },
 ]
+
+type Farm = { id: string; name: string }
+type Panen = {
+  id: string
+  tanggalPanen: string
+  komoditas: string
+  jumlahKg: number
+  hargaJual: number | null
+  catatan: string | null
+  petani: { id: string; name: string }
+  village: { id: string; name: string }
+  farm: { id: string; name: string }
+  plantType: { id: string; name: string }
+}
 
 function toLocalDateString(date: Date) {
   return date.toISOString().slice(0, 10)
 }
 
 export default function ReportsPage() {
-  const [farms, setFarms] = useState<Record<string, unknown>[]>([])
+  const [farms, setFarms] = useState<Farm[]>([])
   const [farmId, setFarmId] = useState('')
   const [dateFrom, setDateFrom] = useState(() => {
-    const d = new Date(); d.setDate(d.getDate() - 30); return toLocalDateString(d)
+    const d = new Date(); d.setDate(d.getDate() - 90); return toLocalDateString(d)
   })
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()))
-  const [records, setRecords] = useState<Record<string, unknown>[]>([])
-  const [farmData, setFarmData] = useState<Record<string, unknown> | null>(null)
+  const [allPanens, setAllPanens] = useState<Panen[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => { api.get('/api/farms').then(d => setFarms(d.farms)) }, [])
+  useEffect(() => { api.get('/api/farms').then(d => setFarms((d.farms as Farm[]) || [])) }, [])
 
   const applyPreset = (days: number) => {
-    const to = new Date()
-    setDateTo(toLocalDateString(to))
+    setDateTo(toLocalDateString(new Date()))
     if (days === 0) {
-      setDateFrom('2000-01-01') // "all time"
+      setDateFrom('2000-01-01')
     } else {
       const from = new Date(); from.setDate(from.getDate() - days)
       setDateFrom(toLocalDateString(from))
@@ -46,122 +58,101 @@ export default function ReportsPage() {
   }
 
   const loadData = async () => {
-    if (!farmId) { toast('warning', 'Pilih kebun terlebih dahulu'); return }
     if (dateFrom && dateTo && dateFrom > dateTo) { toast('warning', 'Tanggal mulai harus sebelum tanggal akhir'); return }
     setLoading(true)
     try {
-      const params = new URLSearchParams({ farmId, limit: '500' })
-      if (dateFrom) params.set('from', dateFrom)
-      if (dateTo) params.set('to', dateTo)
-      const [fData, mData] = await Promise.all([
-        api.get(`/api/farms/${farmId}`),
-        api.get(`/api/monitoring?${params}`),
-      ])
-      setFarmData(fData.farm)
-      setRecords(mData.records)
-      if (mData.records.length === 0) toast('warning', 'Tidak ada data pada rentang waktu tersebut')
+      const data = await api.get('/api/panen')
+      setAllPanens(data as Panen[])
+      setLoaded(true)
+      if ((data as Panen[]).length === 0) toast('warning', 'Belum ada data panen')
     } catch { toast('error', 'Gagal memuat data') } finally { setLoading(false) }
   }
 
-  // Filter records client-side by date range (belt-and-suspenders)
-  const filteredRecords = records.filter(r => {
-    const d = (r.date as string).slice(0, 10)
+  const filtered = allPanens.filter(p => {
+    const d = p.tanggalPanen.slice(0, 10)
+    if (farmId && p.farm.id !== farmId) return false
     if (dateFrom && d < dateFrom) return false
     if (dateTo && d > dateTo) return false
     return true
   })
 
+  const totalKg = filtered.reduce((s, p) => s + p.jumlahKg, 0)
+  const totalValue = filtered.reduce((s, p) => s + (p.hargaJual ? p.jumlahKg * p.hargaJual : 0), 0)
+  const topPlant = (() => {
+    const map: Record<string, number> = {}
+    filtered.forEach(p => { map[p.plantType.name] = (map[p.plantType.name] || 0) + p.jumlahKg })
+    return Object.entries(map).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '-'
+  })()
+
+  const farmLabel = farmId ? (farms.find(f => f.id === farmId)?.name || 'kebun') : 'Semua_Kebun'
+
   const exportExcel = async () => {
-    if (!filteredRecords.length) { toast('warning', 'Tidak ada data untuk diekspor'); return }
+    if (!filtered.length) { toast('warning', 'Tidak ada data untuk diekspor'); return }
     const { utils, writeFile } = await import('xlsx')
     const wsData = [
-      ['Waktu', 'pH', 'TDS (ppm)', 'Suhu (°C)', 'Kelembaban (%)', 'Status pH', 'Status TDS', 'Catatan'],
-      ...filteredRecords.map(r => [
-        formatDateTime(r.date as string),
-        (r.phValue as number).toFixed(2),
-        Math.round(r.tdsValue as number),
-        r.temperature != null ? (r.temperature as number).toFixed(1) : '-',
-        r.humidity != null ? Math.round(r.humidity as number) : '-',
-        r.phStatus,
-        r.tdsStatus,
-        r.notes || '-',
+      ['Tanggal Panen', 'Kebun', 'Jenis Tanaman', 'Jumlah (kg)', 'Harga Jual/kg (Rp)', 'Nilai (Rp)', 'Petani', 'Desa', 'Catatan'],
+      ...filtered.map(p => [
+        formatDate(p.tanggalPanen),
+        p.farm.name,
+        p.plantType.name,
+        p.jumlahKg,
+        p.hargaJual ?? '-',
+        p.hargaJual ? p.jumlahKg * p.hargaJual : '-',
+        p.petani.name,
+        p.village.name,
+        p.catatan || '-',
       ]),
+      [],
+      ['TOTAL', '', '', totalKg.toFixed(1), '', totalValue > 0 ? totalValue : '-', '', '', ''],
     ]
     const ws = utils.aoa_to_sheet(wsData)
-    // Column widths
-    ws['!cols'] = [{ wch: 22 }, { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 30 }]
+    ws['!cols'] = [{ wch: 16 }, { wch: 20 }, { wch: 18 }, { wch: 12 }, { wch: 16 }, { wch: 14 }, { wch: 18 }, { wch: 16 }, { wch: 30 }]
     const wb = utils.book_new()
-    utils.book_append_sheet(wb, ws, 'Monitoring')
-    const fname = `monitoring_${(farmData?.name as string || farmId).replace(/\s+/g, '_')}_${dateFrom}_sd_${dateTo}.xlsx`
-    writeFile(wb, fname)
+    utils.book_append_sheet(wb, ws, 'Data Panen')
+    writeFile(wb, `laporan_panen_${farmLabel.replace(/\s+/g, '_')}_${dateFrom}_sd_${dateTo}.xlsx`)
     toast('success', 'File Excel berhasil diunduh')
   }
 
   const exportPDF = async () => {
-    if (!farmData || !filteredRecords.length) { toast('warning', 'Muat data terlebih dahulu'); return }
+    if (!filtered.length) { toast('warning', 'Muat data terlebih dahulu'); return }
     const { default: jsPDF } = await import('jspdf')
     const { default: autoTable } = await import('jspdf-autotable')
     const doc = new jsPDF()
-    const pt = farmData.plantType as Record<string, unknown>
-    const owner = farmData.owner as Record<string, unknown>
-    const village = farmData.village as Record<string, unknown>
 
-    doc.setFontSize(18); doc.setTextColor(22, 163, 74)
-    doc.text('Laporan Monitoring Hidroponik', 14, 20)
+    doc.setFontSize(16); doc.setTextColor(22, 163, 74)
+    doc.text('Laporan Produksi Hasil Panen', 14, 20)
     doc.setFontSize(10); doc.setTextColor(100)
     doc.text(`Dibuat: ${new Date().toLocaleDateString('id-ID')}`, 14, 28)
     doc.text(`Periode: ${formatDate(dateFrom)} — ${formatDate(dateTo)}`, 14, 34)
+    doc.text(`Kebun: ${farmId ? farmLabel : 'Semua Kebun'}`, 14, 40)
 
-    doc.setFontSize(12); doc.setTextColor(0)
-    doc.text('Informasi Kebun', 14, 46)
-    doc.setFontSize(10); doc.setTextColor(80)
-    doc.text(`Nama Kebun : ${farmData.name}`, 14, 54)
-    doc.text(`Pemilik    : ${owner?.name}`, 14, 60)
-    doc.text(`Desa       : ${village?.name}`, 14, 66)
-    doc.text(`Tanaman    : ${pt?.name}`, 14, 72)
-    doc.text(`Range pH   : ${pt?.minPH} — ${pt?.maxPH}`, 14, 78)
-    doc.text(`Range TDS  : ${pt?.minTDS} — ${pt?.maxTDS} ppm`, 14, 84)
-
-    // Summary
-    const avgPH = filteredRecords.reduce((s, r) => s + (r.phValue as number), 0) / filteredRecords.length
-    const avgTDS = filteredRecords.reduce((s, r) => s + (r.tdsValue as number), 0) / filteredRecords.length
-    const abnormal = filteredRecords.filter(r => r.phStatus !== 'NORMAL' || r.tdsStatus !== 'NORMAL').length
-    doc.text(`Total Catatan: ${filteredRecords.length}  |  pH Rata-rata: ${avgPH.toFixed(2)}  |  TDS Rata-rata: ${Math.round(avgTDS)} ppm  |  Abnormal: ${abnormal}`, 14, 92)
+    doc.setTextColor(0)
+    doc.text(`Total Catatan: ${filtered.length}  |  Total Produksi: ${totalKg.toFixed(1)} kg${totalValue > 0 ? `  |  Estimasi Nilai: Rp ${totalValue.toLocaleString('id-ID')}` : ''}`, 14, 48)
 
     autoTable(doc, {
-      startY: 100,
-      head: [['Waktu', 'pH', 'TDS (ppm)', 'Suhu', 'Status', 'Catatan']],
-      body: filteredRecords.map(r => [
-        formatDateTime(r.date as string),
-        (r.phValue as number).toFixed(2),
-        String(Math.round(r.tdsValue as number)),
-        r.temperature != null ? `${(r.temperature as number).toFixed(1)}°C` : '-',
-        r.phStatus === 'NORMAL' && r.tdsStatus === 'NORMAL' ? 'Normal' : 'Abnormal',
-        String(r.notes || '-'),
-      ]) as string[][],
+      startY: 56,
+      head: [['Tanggal', 'Kebun', 'Tanaman', 'Kg', 'Harga/kg', 'Petani']],
+      body: filtered.map(p => [
+        formatDate(p.tanggalPanen),
+        p.farm.name,
+        p.plantType.name,
+        String(p.jumlahKg),
+        p.hargaJual ? `Rp ${p.hargaJual.toLocaleString('id-ID')}` : '-',
+        p.petani.name,
+      ]),
       headStyles: { fillColor: [22, 163, 74] },
       styles: { fontSize: 8 },
-      columnStyles: { 5: { cellWidth: 40 } },
     })
 
-    const fname = `laporan_${(farmData.name as string).replace(/\s+/g, '_')}_${dateFrom}_sd_${dateTo}.pdf`
-    doc.save(fname)
+    doc.save(`laporan_panen_${farmLabel.replace(/\s+/g, '_')}_${dateFrom}_sd_${dateTo}.pdf`)
     toast('success', 'File PDF berhasil diunduh')
   }
-
-  const abnormalCount = filteredRecords.filter(r => r.phStatus !== 'NORMAL' || r.tdsStatus !== 'NORMAL').length
-  const avgPH = filteredRecords.length
-    ? (filteredRecords.reduce((s, r) => s + (r.phValue as number), 0) / filteredRecords.length).toFixed(2)
-    : '-'
-  const avgTDS = filteredRecords.length
-    ? Math.round(filteredRecords.reduce((s, r) => s + (r.tdsValue as number), 0) / filteredRecords.length) + ' ppm'
-    : '-'
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Laporan</h1>
-        <p className="text-gray-500">Generate dan ekspor laporan monitoring</p>
+        <h1 className="text-2xl font-bold text-gray-800">Laporan Panen</h1>
+        <p className="text-gray-500">Buat dan ekspor laporan produksi hasil panen</p>
       </div>
 
       {/* Filter card */}
@@ -171,21 +162,18 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Row 1: Farm selector + presets */}
             <div className="flex flex-wrap items-end gap-3">
               <div className="w-full sm:w-56">
                 <Select
-                  label="Pilih Kebun"
+                  label="Kebun"
                   value={farmId}
                   onChange={e => setFarmId(e.target.value)}
                   options={[
-                    { value: '', label: '-- Pilih Kebun --' },
-                    ...farms.map((f: Record<string, unknown>) => ({ value: f.id as string, label: f.name as string })),
+                    { value: '', label: 'Semua Kebun' },
+                    ...farms.map(f => ({ value: f.id, label: f.name })),
                   ]}
                 />
               </div>
-
-              {/* Quick presets */}
               <div>
                 <p className="text-xs font-medium text-gray-500 mb-1.5 flex items-center gap-1">
                   <CalendarRange size={12} />Rentang Cepat
@@ -205,122 +193,90 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            {/* Row 2: Custom dates + Load */}
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex items-end gap-2 flex-wrap">
-                <Input
-                  label="Dari Tanggal"
-                  type="date"
-                  value={dateFrom}
-                  onChange={e => setDateFrom(e.target.value)}
-                  className="w-full sm:w-40"
-                />
+                <Input label="Dari Tanggal" type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-full sm:w-40" />
                 <span className="text-gray-400 mb-2.5 hidden sm:block">—</span>
-                <Input
-                  label="Sampai Tanggal"
-                  type="date"
-                  value={dateTo}
-                  onChange={e => setDateTo(e.target.value)}
-                  className="w-full sm:w-40"
-                />
+                <Input label="Sampai Tanggal" type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-full sm:w-40" />
               </div>
-              <Button onClick={loadData} loading={loading}>
-                Muat Data
-              </Button>
+              <Button onClick={loadData} loading={loading}>Muat Data</Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Preview */}
-      {farmData && (
+      {loaded && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <CardTitle>Pratinjau: {farmData.name as string}</CardTitle>
+                <CardTitle>Pratinjau Laporan</CardTitle>
                 <p className="text-xs text-gray-400 mt-1">
-                  {formatDate(dateFrom)} — {formatDate(dateTo)} &nbsp;·&nbsp; {filteredRecords.length} catatan
+                  {formatDate(dateFrom)} — {formatDate(dateTo)} &nbsp;·&nbsp; {filtered.length} catatan
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={exportExcel} disabled={!filteredRecords.length}>
+                <Button variant="outline" onClick={exportExcel} disabled={!filtered.length}>
                   <FileSpreadsheet size={16} />Excel
                 </Button>
-                <Button onClick={exportPDF} disabled={!filteredRecords.length}>
+                <Button onClick={exportPDF} disabled={!filtered.length}>
                   <FileText size={16} />PDF
                 </Button>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            {/* Summary row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5 p-4 bg-gray-50 rounded-xl">
               <div>
                 <p className="text-xs text-gray-500 mb-1">Total Catatan</p>
-                <p className="text-2xl font-bold text-gray-800">{filteredRecords.length}</p>
+                <p className="text-2xl font-bold text-gray-800">{filtered.length}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-1">pH Rata-rata</p>
-                <p className="text-2xl font-bold text-green-700">{avgPH}</p>
+                <p className="text-xs text-gray-500 mb-1">Total Produksi</p>
+                <p className="text-2xl font-bold text-green-700">{totalKg.toFixed(1)} kg</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-1">TDS Rata-rata</p>
-                <p className="text-2xl font-bold text-blue-700">{avgTDS}</p>
+                <p className="text-xs text-gray-500 mb-1">Estimasi Nilai</p>
+                <p className="text-2xl font-bold text-amber-600">{totalValue > 0 ? `Rp ${(totalValue / 1000).toFixed(0)}rb` : '-'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-1">Catatan Abnormal</p>
-                <p className={`text-2xl font-bold ${abnormalCount > 0 ? 'text-red-600' : 'text-gray-400'}`}>{abnormalCount}</p>
+                <p className="text-xs text-gray-500 mb-1">Tanaman Terbanyak</p>
+                <p className="text-lg font-bold text-purple-700 truncate">{topPlant}</p>
               </div>
             </div>
 
-            {/* Table */}
-            {filteredRecords.length === 0 ? (
+            {filtered.length === 0 ? (
               <p className="text-center text-gray-400 py-8">Tidak ada data pada rentang waktu ini</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-gray-500 text-left">
-                      <th className="pb-2 font-medium">Waktu</th>
-                      <th className="pb-2 font-medium text-center">pH</th>
-                      <th className="pb-2 font-medium text-center">TDS (ppm)</th>
-                      <th className="pb-2 font-medium text-center">Suhu</th>
-                      <th className="pb-2 font-medium text-center">Kelembaban</th>
-                      <th className="pb-2 font-medium text-center">Status</th>
+                      <th className="pb-2 font-medium">Tanggal</th>
+                      <th className="pb-2 font-medium">Kebun</th>
+                      <th className="pb-2 font-medium">Tanaman</th>
+                      <th className="pb-2 font-medium text-center">Jumlah (kg)</th>
+                      <th className="pb-2 font-medium text-center">Harga/kg</th>
+                      <th className="pb-2 font-medium">Petani</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {filteredRecords.slice(0, 25).map(r => {
-                      const normal = r.phStatus === 'NORMAL' && r.tdsStatus === 'NORMAL'
-                      return (
-                        <tr key={r.id as string} className="hover:bg-gray-50">
-                          <td className="py-2 text-gray-700">{formatDateTime(r.date as string)}</td>
-                          <td className={`py-2 text-center font-mono font-semibold ${r.phStatus !== 'NORMAL' ? 'text-red-600' : 'text-green-700'}`}>
-                            {(r.phValue as number).toFixed(2)}
-                          </td>
-                          <td className={`py-2 text-center font-mono font-semibold ${r.tdsStatus !== 'NORMAL' ? 'text-red-600' : 'text-blue-700'}`}>
-                            {Math.round(r.tdsValue as number)}
-                          </td>
-                          <td className="py-2 text-center text-gray-600">
-                            {r.temperature != null ? `${(r.temperature as number).toFixed(1)}°C` : '—'}
-                          </td>
-                          <td className="py-2 text-center text-gray-600">
-                            {r.humidity != null ? `${Math.round(r.humidity as number)}%` : '—'}
-                          </td>
-                          <td className="py-2 text-center">
-                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${normal ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                              {normal ? 'Normal' : 'Abnormal'}
-                            </span>
-                          </td>
-                        </tr>
-                      )
-                    })}
+                    {filtered.slice(0, 25).map(p => (
+                      <tr key={p.id} className="hover:bg-gray-50">
+                        <td className="py-2 text-gray-700">{formatDate(p.tanggalPanen)}</td>
+                        <td className="py-2 text-gray-700">{p.farm.name}</td>
+                        <td className="py-2 text-gray-700">{p.plantType.name}</td>
+                        <td className="py-2 text-center font-semibold text-green-700">{p.jumlahKg}</td>
+                        <td className="py-2 text-center text-gray-600">{p.hargaJual ? `Rp ${p.hargaJual.toLocaleString('id-ID')}` : '—'}</td>
+                        <td className="py-2 text-gray-600">{p.petani.name}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
-                {filteredRecords.length > 25 && (
+                {filtered.length > 25 && (
                   <p className="text-xs text-gray-400 mt-3 text-center">
-                    Menampilkan 25 dari {filteredRecords.length} catatan — export untuk data lengkap
+                    Menampilkan 25 dari {filtered.length} catatan — export untuk data lengkap
                   </p>
                 )}
               </div>

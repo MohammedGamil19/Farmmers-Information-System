@@ -83,14 +83,13 @@ model User {
   kelompokTaniId String?
   kelompokTani   KelompokTani? @relation(fields: [kelompokTaniId], references: [id])
 
-  farms             Farm[]
-  monitoringRecords MonitoringRecord[]
-  notifications     Notification[]
-  plantTypes        PlantType[]
-  lahans            Lahan[]
-  announcements     Announcement[]
-  calendarEvents    CalendarEvent[]
-  panens            Panen[]
+  farms          Farm[]
+  notifications  Notification[]
+  plantTypes     PlantType[]
+  lahans         Lahan[]
+  announcements  Announcement[]
+  calendarEvents CalendarEvent[]
+  panens         Panen[]
 
   @@map("users")
 }
@@ -137,10 +136,6 @@ model PlantType {
   id          String   @id @default(cuid())
   name        String   @unique
   description String?
-  minPH       Float    @default(5.5)
-  maxPH       Float    @default(7.0)
-  minTDS      Float    @default(800)
-  maxTDS      Float    @default(2000)
   growthDays  Int      @default(30)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -148,7 +143,8 @@ model PlantType {
   createdById String?
   createdBy   User?   @relation(fields: [createdById], references: [id])
 
-  farms Farm[]
+  farms  Farm[]
+  panens Panen[]
 
   @@map("plant_types")
 }
@@ -165,7 +161,6 @@ model Farm {
   estimatedHarvest DateTime?
   actualHarvest    DateTime?
   isActive         Boolean    @default(true)
-  deviceToken      String?    @unique
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -176,7 +171,7 @@ model Farm {
   plantTypeId String
   plantType   PlantType @relation(fields: [plantTypeId], references: [id])
 
-  monitoringRecords MonitoringRecord[]
+  panens Panen[]
 
   @@map("farms")
 }
@@ -199,33 +194,8 @@ model Lahan {
   village        Village       @relation(fields: [villageId], references: [id])
   kelompokTaniId String?
   kelompokTani   KelompokTani? @relation(fields: [kelompokTaniId], references: [id])
-  panens         Panen[]
 
   @@map("lahans")
-}
-
-model MonitoringRecord {
-  id          String   @id @default(cuid())
-  date        DateTime
-  phValue     Float
-  tdsValue    Float
-  temperature Float?
-  humidity    Float?
-  notes       String?
-  phStatus    String   @default("NORMAL")
-  tdsStatus   String   @default("NORMAL")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  actionTaken String?
-  source      String   @default("MANUAL")
-
-  farmId String
-  farm   Farm   @relation(fields: [farmId], references: [id])
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  @@map("monitoring_records")
 }
 
 model Notification {
@@ -290,12 +260,14 @@ model Panen {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  petaniId  String
-  petani    User    @relation(fields: [petaniId], references: [id])
-  villageId String
-  village   Village @relation(fields: [villageId], references: [id])
-  lahanId   String?
-  lahan     Lahan?  @relation(fields: [lahanId], references: [id])
+  farmId      String
+  farm        Farm      @relation(fields: [farmId], references: [id])
+  plantTypeId String
+  plantType   PlantType @relation(fields: [plantTypeId], references: [id])
+  petaniId    String
+  petani      User      @relation(fields: [petaniId], references: [id])
+  villageId   String
+  village     Village   @relation(fields: [villageId], references: [id])
 
   @@map("panens")
 }

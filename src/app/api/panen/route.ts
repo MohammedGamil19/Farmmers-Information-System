@@ -22,7 +22,8 @@ export async function GET(request: NextRequest) {
     include: {
       petani: { select: { id: true, name: true } },
       village: { select: { id: true, name: true } },
-      lahan: { select: { id: true, blockLocation: true, commodity: true } },
+      farm: { select: { id: true, name: true } },
+      plantType: { select: { id: true, name: true } },
     },
     orderBy: { tanggalPanen: 'desc' },
   })
@@ -33,34 +34,50 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const user = getUserFromRequest(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (user.role === 'FARMER') {
-    // Farmers can only add their own harvest
-  }
 
   const body = await request.json()
-  const { tanggalPanen, komoditas, jumlahKg, hargaJual, catatan, villageId, lahanId } = body
+  const { tanggalPanen, farmId, jumlahKg, hargaJual, catatan } = body
 
-  if (!tanggalPanen || !komoditas || !jumlahKg || !villageId) {
-    return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 })
+  if (!tanggalPanen || !farmId || !jumlahKg) {
+    return NextResponse.json({ error: 'Tanggal panen, kebun, dan jumlah wajib diisi' }, { status: 400 })
   }
 
-  const petaniId = user.role === 'FARMER' ? user.userId : (body.petaniId || user.userId)
+  // Everything (plant type, village, farmer) is derived from the selected garden
+  const farm = await prisma.farm.findUnique({
+    where: { id: farmId },
+    include: { plantType: { select: { id: true, name: true } } },
+  })
+  if (!farm || !farm.isActive) return NextResponse.json({ error: 'Kebun tidak ditemukan' }, { status: 404 })
+
+  // Access control: farmers may only record harvest for their own gardens,
+  // village admins only for gardens within their own village.
+  if (user.role === 'FARMER' && farm.ownerId !== user.userId) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+  if (user.role === 'VILLAGE_ADMIN') {
+    const villageId = await getAdminVillageId(user.userId)
+    if (villageId && farm.villageId !== villageId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
 
   const panen = await prisma.panen.create({
     data: {
       tanggalPanen: new Date(tanggalPanen),
-      komoditas,
+      komoditas: farm.plantType.name,
       jumlahKg: parseFloat(jumlahKg),
       hargaJual: hargaJual ? parseFloat(hargaJual) : null,
       catatan: catatan || null,
-      petaniId,
-      villageId,
-      lahanId: lahanId || null,
+      farmId: farm.id,
+      plantTypeId: farm.plantType.id,
+      petaniId: farm.ownerId,
+      villageId: farm.villageId,
     },
     include: {
       petani: { select: { id: true, name: true } },
       village: { select: { id: true, name: true } },
-      lahan: { select: { id: true, blockLocation: true, commodity: true } },
+      farm: { select: { id: true, name: true } },
+      plantType: { select: { id: true, name: true } },
     },
   })
 

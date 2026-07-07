@@ -17,7 +17,7 @@ import Link from 'next/link'
 type Farm = Record<string, unknown>
 
 const ADD_NEW_VALUE = '__ADD_NEW__'
-const EMPTY_PLANT_FORM = { name: '', description: '', minPH: '5.5', maxPH: '7.0', minTDS: '800', maxTDS: '2000', growthDays: '30' }
+const EMPTY_PLANT_FORM = { name: '', description: '', growthDays: '30' }
 
 export default function FarmsPage() {
   const { user } = useAuth()
@@ -83,10 +83,6 @@ export default function FarmsPage() {
       const res = await api.post('/api/plant-types', {
         name: plantForm.name.trim(),
         description: plantForm.description.trim() || null,
-        minPH: parseFloat(plantForm.minPH),
-        maxPH: parseFloat(plantForm.maxPH),
-        minTDS: parseInt(plantForm.minTDS),
-        maxTDS: parseInt(plantForm.maxTDS),
         growthDays: parseInt(plantForm.growthDays),
       })
       toast('success', `Tanaman "${res.plantType.name}" berhasil ditambahkan`)
@@ -233,27 +229,6 @@ export default function FarmsPage() {
                 onChange={e => setPlantForm({ ...plantForm, name: e.target.value })}
                 placeholder="Contoh: Pakcoy, Basil, Mint..."
               />
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs font-medium text-gray-600 mb-1.5">Range pH Ideal</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input label="Min" type="number" step="0.1" min="0" max="14"
-                      value={plantForm.minPH} onChange={e => setPlantForm({ ...plantForm, minPH: e.target.value })} />
-                    <Input label="Max" type="number" step="0.1" min="0" max="14"
-                      value={plantForm.maxPH} onChange={e => setPlantForm({ ...plantForm, maxPH: e.target.value })} />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-600 mb-1.5">Range TDS (ppm)</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input label="Min" type="number" step="50"
-                      value={plantForm.minTDS} onChange={e => setPlantForm({ ...plantForm, minTDS: e.target.value })} />
-                    <Input label="Max" type="number" step="50"
-                      value={plantForm.maxTDS} onChange={e => setPlantForm({ ...plantForm, maxTDS: e.target.value })} />
-                  </div>
-                </div>
-              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <Input

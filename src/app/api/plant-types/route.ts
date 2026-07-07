@@ -30,10 +30,6 @@ export async function POST(request: NextRequest) {
       data: {
         name: body.name,
         description: body.description,
-        minPH: body.minPH || 5.5,
-        maxPH: body.maxPH || 7.0,
-        minTDS: body.minTDS || 800,
-        maxTDS: body.maxTDS || 2000,
         growthDays: body.growthDays || 30,
         createdById: user.userId,
       },

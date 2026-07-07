@@ -22,10 +22,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       data: {
         name: body.name,
         description: body.description ?? null,
-        minPH: body.minPH,
-        maxPH: body.maxPH,
-        minTDS: body.minTDS,
-        maxTDS: body.maxTDS,
         growthDays: body.growthDays,
       },
     })

@@ -38,7 +38,7 @@ export default function LoginPage() {
             <Leaf className="text-green-600" size={32} />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Selamat Datang</h1>
-          <p className="text-gray-500 mt-1">Masuk ke SI Panen GAPOKTAN</p>
+          <p className="text-gray-500 mt-1">Masuk ke SI Dokumentasi Panen</p>
         </div>
 
         {error && (

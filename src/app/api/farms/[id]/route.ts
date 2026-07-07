@@ -29,7 +29,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!authorized) return NextResponse.json({ error: 'Farm not found' }, { status: 404 })
   const farm = await prisma.farm.findUnique({
     where: { id },
-    include: { owner: { select: { id: true, name: true, email: true, phone: true } }, village: true, plantType: true, monitoringRecords: { orderBy: [{ date: 'desc' }, { createdAt: 'desc' }], take: 30 } },
+    include: {
+      owner: { select: { id: true, name: true, email: true, phone: true } },
+      village: true,
+      plantType: true,
+      panens: {
+        where: { isActive: true },
+        orderBy: { tanggalPanen: 'desc' },
+        include: { plantType: { select: { id: true, name: true } }, petani: { select: { id: true, name: true } } },
+      },
+    },
   })
   if (!farm) return NextResponse.json({ error: 'Farm not found' }, { status: 404 })
   return NextResponse.json({ farm })

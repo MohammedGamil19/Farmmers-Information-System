@@ -62,7 +62,7 @@ export default function RegisterPage() {
             <Leaf className="text-green-600" size={32} />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Buat Akun Baru</h1>
-          <p className="text-gray-500 mt-1">Daftar untuk mulai menggunakan SI Panen GAPOKTAN</p>
+          <p className="text-gray-500 mt-1">Daftar untuk mulai menggunakan SI Dokumentasi Panen</p>
         </div>
 
         {error && (

@@ -7,16 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { toast } from '@/components/ui/toaster'
-import { Plus, Sprout, Pencil, Trash2, Droplets, FlaskConical, Calendar } from 'lucide-react'
+import { Plus, Sprout, Pencil, Trash2, Calendar } from 'lucide-react'
 
 type PlantType = {
   id: string
   name: string
   description: string | null
-  minPH: number
-  maxPH: number
-  minTDS: number
-  maxTDS: number
   growthDays: number
   _count?: { farms: number }
   createdBy?: { id: string; name: string; role: string } | null
@@ -25,10 +21,6 @@ type PlantType = {
 const EMPTY_FORM = {
   name: '',
   description: '',
-  minPH: '5.5',
-  maxPH: '7.0',
-  minTDS: '800',
-  maxTDS: '2000',
   growthDays: '30',
 }
 
@@ -71,10 +63,6 @@ export default function TanamanPage() {
     setForm({
       name: p.name,
       description: p.description || '',
-      minPH: String(p.minPH),
-      maxPH: String(p.maxPH),
-      minTDS: String(p.minTDS),
-      maxTDS: String(p.maxTDS),
       growthDays: String(p.growthDays),
     })
     setShowModal(true)
@@ -83,22 +71,12 @@ export default function TanamanPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name.trim()) { toast('error', 'Nama tanaman wajib diisi'); return }
-    const minPH = parseFloat(form.minPH)
-    const maxPH = parseFloat(form.maxPH)
-    const minTDS = parseInt(form.minTDS)
-    const maxTDS = parseInt(form.maxTDS)
-    if (minPH >= maxPH) { toast('error', 'pH Minimum harus lebih kecil dari pH Maksimum'); return }
-    if (minTDS >= maxTDS) { toast('error', 'TDS Minimum harus lebih kecil dari TDS Maksimum'); return }
 
     setSaving(true)
     try {
       const payload = {
         name: form.name.trim(),
         description: form.description.trim() || null,
-        minPH,
-        maxPH,
-        minTDS,
-        maxTDS,
         growthDays: parseInt(form.growthDays),
       }
 
@@ -148,19 +126,13 @@ export default function TanamanPage() {
     (p.description || '').toLowerCase().includes(search.toLowerCase())
   )
 
-  // pH status color helper
-  const phColor = (min: number, max: number) => {
-    if (min < 5.5 || max > 7.5) return 'text-orange-600 bg-orange-50'
-    return 'text-green-700 bg-green-50'
-  }
-
   return (
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Jenis Tanaman</h1>
-          <p className="text-gray-500">Kelola katalog tanaman hidroponik &amp; parameter idealnya</p>
+          <p className="text-gray-500">Kelola katalog jenis tanaman &amp; estimasi masa panennya</p>
         </div>
         <Button onClick={openAdd}>
           <Plus size={16} />Tambah Tanaman
@@ -232,19 +204,9 @@ export default function TanamanPage() {
 
                   {/* Parameter badges */}
                   <div className="space-y-2 mt-3">
-                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${phColor(p.minPH, p.maxPH)}`}>
-                      <FlaskConical size={14} />
-                      <span>pH Ideal:</span>
-                      <span className="font-bold ml-auto">{p.minPH} – {p.maxPH}</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-blue-700 bg-blue-50">
-                      <Droplets size={14} />
-                      <span>TDS Ideal:</span>
-                      <span className="font-bold ml-auto">{p.minTDS} – {p.maxTDS} ppm</span>
-                    </div>
                     <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-purple-700 bg-purple-50">
                       <Calendar size={14} />
-                      <span>Masa Panen:</span>
+                      <span>Estimasi Masa Panen:</span>
                       <span className="font-bold ml-auto">{p.growthDays} hari</span>
                     </div>
                   </div>
@@ -296,71 +258,6 @@ export default function TanamanPage() {
             onChange={e => setForm({ ...form, description: e.target.value })}
             placeholder="Keterangan singkat tentang tanaman ini"
           />
-
-          {/* pH range */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <FlaskConical size={14} className="text-green-600" />
-              <p className="text-sm font-medium text-gray-700">Range pH Ideal</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="pH Minimum"
-                type="number"
-                step="0.1"
-                min="0"
-                max="14"
-                value={form.minPH}
-                onChange={e => setForm({ ...form, minPH: e.target.value })}
-              />
-              <Input
-                label="pH Maksimum"
-                type="number"
-                step="0.1"
-                min="0"
-                max="14"
-                value={form.maxPH}
-                onChange={e => setForm({ ...form, maxPH: e.target.value })}
-              />
-            </div>
-            {/* Live preview */}
-            {form.minPH && form.maxPH && (
-              <p className="text-xs text-green-700 mt-1.5 bg-green-50 px-2 py-1 rounded">
-                ✓ Air nutrisi harus di antara pH <strong>{form.minPH}</strong> dan <strong>{form.maxPH}</strong>
-              </p>
-            )}
-          </div>
-
-          {/* TDS range */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Droplets size={14} className="text-blue-600" />
-              <p className="text-sm font-medium text-gray-700">Range TDS Ideal (ppm)</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="TDS Minimum"
-                type="number"
-                step="50"
-                min="0"
-                value={form.minTDS}
-                onChange={e => setForm({ ...form, minTDS: e.target.value })}
-              />
-              <Input
-                label="TDS Maksimum"
-                type="number"
-                step="50"
-                min="0"
-                value={form.maxTDS}
-                onChange={e => setForm({ ...form, maxTDS: e.target.value })}
-              />
-            </div>
-            {form.minTDS && form.maxTDS && (
-              <p className="text-xs text-blue-700 mt-1.5 bg-blue-50 px-2 py-1 rounded">
-                ✓ Konsentrasi nutrisi harus <strong>{form.minTDS}</strong> – <strong>{form.maxTDS}</strong> ppm
-              </p>
-            )}
-          </div>
 
           {/* Growth days */}
           <div>

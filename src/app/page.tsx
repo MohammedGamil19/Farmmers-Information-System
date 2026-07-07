@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Leaf, BarChart3, Bell, Shield, CheckCircle, FlaskConical, Users, MapPin, Wheat } from 'lucide-react'
+import { Leaf, BarChart3, Bell, Shield, CheckCircle, FileText, Users, MapPin, Wheat } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { HeroSlider } from '@/components/hero-slider'
 import { LandingNavbar } from '@/components/landing-navbar'
@@ -10,7 +10,7 @@ import { LandingNavbar } from '@/components/landing-navbar'
 
 const CMS_DEFAULTS = {
   cms_hero: {
-    title: 'Gapoktan Information System for Agricultural Harvest Production Data Documentation',
+    title: 'Sistem Informasi Dokumentasi Data Produksi Hasil Panen Pertanian',
     subtitle: 'Membantu GAPOKTAN mendigitalisasi pencatatan data hasil panen, keanggotaan, dan lahan pertanian secara terstruktur dan mudah diakses.',
     buttonText: 'Mulai Sekarang',
     images: [] as { id: string; url: string }[],
@@ -18,7 +18,7 @@ const CMS_DEFAULTS = {
   cms_about: {
     enabled: true,
     title: 'Tentang Sistem Informasi GAPOKTAN',
-    body: 'Sistem ini dikembangkan untuk membantu GAPOKTAN mendokumentasikan data produksi hasil panen, keanggotaan, dan lahan pertanian secara digital dan terstruktur. Fitur pemantauan pH dan TDS hidroponik tetap tersedia sebagai dukungan tambahan bagi kebun yang membutuhkannya.',
+    body: 'Sistem ini dikembangkan untuk membantu GAPOKTAN mendokumentasikan data produksi hasil panen, keanggotaan, dan lahan pertanian secara digital dan terstruktur, sehingga produktivitas setiap kebun dan jenis tanaman dapat dipantau dengan mudah.',
     image: '',
   },
   cms_gallery: [] as { url: string; caption: string }[],
@@ -28,7 +28,7 @@ const CMS_DEFAULTS = {
     { icon: 'BarChart3', title: 'Analitik Produksi', desc: 'Pantau tren produksi panen dan performa pertanian dari waktu ke waktu.' },
     { icon: 'Bell', title: 'Notifikasi & Pengumuman', desc: 'Informasi kegiatan dan pengumuman GAPOKTAN tersampaikan secara real-time.' },
     { icon: 'Shield', title: 'Manajemen Peran', desc: 'Akses terpisah untuk Super Admin, Admin Desa, dan Petani.' },
-    { icon: 'FlaskConical', title: 'Monitor pH & TDS (Fitur Pendukung)', desc: 'Fitur tambahan untuk memantau kualitas nutrisi hidroponik bagi kebun yang membutuhkannya.' },
+    { icon: 'FileText', title: 'Laporan & Ekspor Data', desc: 'Ekspor laporan produksi panen ke Excel dan PDF untuk keperluan pelaporan program.' },
   ] as { icon: string; title: string; desc: string }[],
   cms_show_stats: true,
   cms_credits: {
@@ -47,7 +47,7 @@ const CMS_DEFAULTS = {
 }
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  FlaskConical, BarChart3, Bell, CheckCircle, Shield, Leaf, Users,
+  FileText, BarChart3, Bell, CheckCircle, Shield, Leaf, Users, Wheat,
 }
 
 function GalleryCard({ img, className }: { img: { url: string; caption: string }; className?: string }) {

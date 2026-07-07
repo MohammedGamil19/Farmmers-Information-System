@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toaster'
-import { Bell, CheckCheck, FlaskConical, Leaf, AlertTriangle, Info } from 'lucide-react'
+import { Bell, CheckCheck, Wheat, Leaf, AlertTriangle } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
 
 export default function NotificationsPage() {
@@ -25,11 +25,9 @@ export default function NotificationsPage() {
   }
 
   const icons: Record<string, React.ReactNode> = {
-    ABNORMAL_PH: <FlaskConical size={18} className="text-red-500" />,
-    ABNORMAL_TDS: <FlaskConical size={18} className="text-orange-500" />,
-    UPCOMING_HARVEST: <Leaf size={18} className="text-green-500" />,
+    UPCOMING_HARVEST: <Wheat size={18} className="text-green-500" />,
     MISSING_RECORD: <AlertTriangle size={18} className="text-yellow-500" />,
-    SYSTEM: <Info size={18} className="text-blue-500" />,
+    SYSTEM: <Leaf size={18} className="text-green-600" />,
   }
 
   const unread = notifications.filter(n => !n.isRead)

@@ -30,11 +30,17 @@ export async function GET(request: NextRequest) {
       owner: { select: { id: true, name: true, email: true } },
       village: true,
       plantType: true,
-      monitoringRecords: { orderBy: [{ date: 'desc' }, { createdAt: 'desc' }], take: 3 },
+      panens: { where: { isActive: true }, select: { jumlahKg: true } },
     },
     orderBy: { createdAt: 'desc' },
   })
-  return NextResponse.json({ farms })
+  // Attach total harvested kg per farm for quick display
+  const farmsWithTotals = farms.map(f => ({
+    ...f,
+    totalPanenKg: Math.round(f.panens.reduce((s, p) => s + p.jumlahKg, 0) * 10) / 10,
+    panenCount: f.panens.length,
+  }))
+  return NextResponse.json({ farms: farmsWithTotals })
 }
 
 export async function POST(request: NextRequest) {

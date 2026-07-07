@@ -6,11 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Trash2, Wheat, Scale, TrendingUp, Sprout } from 'lucide-react'
+import { Plus, Pencil, Trash2, Wheat, Scale, TrendingUp, Sprout, Leaf } from 'lucide-react'
 
-type Lahan = { id: string; blockLocation: string | null; commodity: string | null }
-type Village = { id: string; name: string }
-type Petani = { id: string; name: string }
+type PlantType = { id: string; name: string }
+type Farm = { id: string; name: string; plantType: PlantType; owner?: { id: string; name: string } }
 type Panen = {
   id: string
   tanggalPanen: string
@@ -18,28 +17,24 @@ type Panen = {
   jumlahKg: number
   hargaJual: number | null
   catatan: string | null
-  petani: Petani
-  village: Village
-  lahan: Lahan | null
+  petani: { id: string; name: string }
+  village: { id: string; name: string }
+  farm: { id: string; name: string }
+  plantType: { id: string; name: string }
 }
 
 const EMPTY_FORM = {
   tanggalPanen: '',
-  komoditas: '',
+  farmId: '',
   jumlahKg: '',
   hargaJual: '',
   catatan: '',
-  villageId: '',
-  lahanId: '',
-  petaniId: '',
 }
 
 export default function PanenPage() {
   const { user } = useAuth()
   const [panens, setPanens] = useState<Panen[]>([])
-  const [lahans, setLahans] = useState<Lahan[]>([])
-  const [villages, setVillages] = useState<Village[]>([])
-  const [anggota, setAnggota] = useState<Petani[]>([])
+  const [farms, setFarms] = useState<Farm[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -48,24 +43,15 @@ export default function PanenPage() {
   const [filterKomoditas, setFilterKomoditas] = useState('')
   const submitLock = useRef(false)
 
-  const isFarmer = user?.role === 'FARMER'
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN'
-
   async function load() {
     setLoading(true)
     try {
-      const calls: Promise<unknown>[] = [
+      const [panenData, farmData] = await Promise.all([
         api.get('/api/panen'),
-        api.get('/api/lahan'),
-      ]
-      if (!isFarmer) calls.push(api.get('/api/anggota'))
-      if (isSuperAdmin) calls.push(api.get('/api/villages'))
-
-      const [panenData, lahanData, ...rest] = await Promise.all(calls)
+        api.get('/api/farms'),
+      ])
       setPanens(panenData as Panen[])
-      setLahans((lahanData as { lahans: Lahan[] }).lahans || [])
-      if (!isFarmer && rest[0]) setAnggota((rest[0] as { members: Petani[] }).members || [])
-      if (isSuperAdmin && rest[1]) setVillages((rest[1] as { villages: Village[] }).villages || [])
+      setFarms((farmData as { farms: Farm[] }).farms || [])
     } finally {
       setLoading(false)
     }
@@ -73,14 +59,11 @@ export default function PanenPage() {
 
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const selectedFarm = farms.find(f => f.id === form.farmId)
+
   function openNew() {
     setEditId(null)
-    setForm({
-      ...EMPTY_FORM,
-      tanggalPanen: new Date().toISOString().split('T')[0],
-      villageId: user?.village?.id || '',
-      petaniId: isFarmer ? (user?.id || '') : '',
-    })
+    setForm({ ...EMPTY_FORM, tanggalPanen: new Date().toISOString().split('T')[0] })
     setShowModal(true)
   }
 
@@ -88,13 +71,10 @@ export default function PanenPage() {
     setEditId(p.id)
     setForm({
       tanggalPanen: p.tanggalPanen.split('T')[0],
-      komoditas: p.komoditas,
+      farmId: p.farm.id,
       jumlahKg: String(p.jumlahKg),
       hargaJual: p.hargaJual != null ? String(p.hargaJual) : '',
       catatan: p.catatan || '',
-      villageId: p.village.id,
-      lahanId: p.lahan?.id || '',
-      petaniId: p.petani.id,
     })
     setShowModal(true)
   }
@@ -111,6 +91,8 @@ export default function PanenPage() {
       }
       setShowModal(false)
       await load()
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Gagal menyimpan')
     } finally {
       setSaving(false)
       submitLock.current = false
@@ -129,12 +111,27 @@ export default function PanenPage() {
 
   const totalKg = filtered.reduce((s, p) => s + p.jumlahKg, 0)
   const totalNilai = filtered.reduce((s, p) => s + (p.hargaJual ? p.jumlahKg * p.hargaJual : 0), 0)
-  const komoditasTerbanyak = (() => {
-    const map: Record<string, number> = {}
-    panens.forEach(p => { map[p.komoditas] = (map[p.komoditas] || 0) + p.jumlahKg })
-    const top = Object.entries(map).sort((a, b) => b[1] - a[1])[0]
-    return top ? top[0] : '-'
+
+  // Roll-ups computed from all harvest records
+  const perKebun = (() => {
+    const map: Record<string, { name: string; kg: number }> = {}
+    panens.forEach(p => {
+      if (!map[p.farm.id]) map[p.farm.id] = { name: p.farm.name, kg: 0 }
+      map[p.farm.id].kg += p.jumlahKg
+    })
+    return Object.values(map).sort((a, b) => b.kg - a.kg)
   })()
+
+  const perTanaman = (() => {
+    const map: Record<string, { name: string; kg: number }> = {}
+    panens.forEach(p => {
+      if (!map[p.plantType.id]) map[p.plantType.id] = { name: p.plantType.name, kg: 0 }
+      map[p.plantType.id].kg += p.jumlahKg
+    })
+    return Object.values(map).sort((a, b) => b.kg - a.kg)
+  })()
+
+  const komoditasTerbanyak = perTanaman[0]?.name ?? '-'
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -147,12 +144,18 @@ export default function PanenPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Data Panen</h1>
-          <p className="text-gray-500 text-sm mt-1">Rekap hasil panen GAPOKTAN</p>
+          <p className="text-gray-500 text-sm mt-1">Dokumentasi produksi hasil panen per kebun dan jenis tanaman</p>
         </div>
-        <Button onClick={openNew} className="flex items-center gap-2">
+        <Button onClick={openNew} className="flex items-center gap-2" disabled={farms.length === 0}>
           <Plus size={16} /> Tambah Panen
         </Button>
       </div>
+
+      {farms.length === 0 && (
+        <div className="mb-6 rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+          Belum ada kebun. Tambahkan kebun terlebih dahulu di menu <strong>Kebun</strong> sebelum mencatat panen.
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -191,10 +194,62 @@ export default function PanenPage() {
               <Sprout className="text-purple-600" size={20} />
             </div>
             <p className="text-2xl font-bold text-gray-800 truncate">{komoditasTerbanyak}</p>
-            <p className="text-xs text-gray-500 mt-1">Komoditas Terbanyak</p>
+            <p className="text-xs text-gray-500 mt-1">Tanaman Terbanyak</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Roll-ups: per garden & per plant type */}
+      {panens.length > 0 && (
+        <div className="grid lg:grid-cols-2 gap-6 mb-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base"><Leaf size={16} /> Total Produksi per Kebun</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {perKebun.map((k, i) => {
+                  const max = perKebun[0].kg || 1
+                  return (
+                    <div key={i}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-700">{k.name}</span>
+                        <span className="font-semibold text-green-700">{k.kg.toFixed(1)} kg</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div className="h-full bg-green-500 rounded-full" style={{ width: `${(k.kg / max) * 100}%` }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base"><Sprout size={16} /> Total Produksi per Jenis Tanaman</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {perTanaman.map((t, i) => {
+                  const max = perTanaman[0].kg || 1
+                  return (
+                    <div key={i}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-700">{t.name}</span>
+                        <span className="font-semibold text-purple-700">{t.kg.toFixed(1)} kg</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div className="h-full bg-purple-500 rounded-full" style={{ width: `${(t.kg / max) * 100}%` }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Filter */}
       <div className="mb-4">
@@ -216,15 +271,14 @@ export default function PanenPage() {
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <p className="font-semibold text-gray-800">{p.komoditas}</p>
-                  <p className="text-sm text-gray-500">{p.petani.name}</p>
+                  <p className="font-semibold text-gray-800">{p.plantType.name}</p>
+                  <p className="text-sm text-gray-500">{p.farm.name} · {p.petani.name}</p>
                 </div>
                 <Badge variant="success">{p.jumlahKg} kg</Badge>
               </div>
               <p className="text-xs text-gray-500 mb-1">
                 {new Date(p.tanggalPanen).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
-              {p.lahan && <p className="text-xs text-gray-400">Lahan: {p.lahan.blockLocation || p.lahan.commodity || '-'}</p>}
               {p.hargaJual && <p className="text-xs text-gray-400">Harga: Rp {p.hargaJual.toLocaleString('id-ID')}/kg</p>}
               {p.catatan && <p className="text-xs text-gray-400 mt-1 italic">{p.catatan}</p>}
               <div className="flex gap-2 mt-3">
@@ -254,12 +308,11 @@ export default function PanenPage() {
                 <thead>
                   <tr className="border-b text-left text-gray-500">
                     <th className="pb-3 font-medium">Tanggal Panen</th>
+                    <th className="pb-3 font-medium">Kebun</th>
+                    <th className="pb-3 font-medium">Jenis Tanaman</th>
                     <th className="pb-3 font-medium">Petani</th>
-                    <th className="pb-3 font-medium">Komoditas</th>
                     <th className="pb-3 font-medium">Jumlah (kg)</th>
                     <th className="pb-3 font-medium">Harga Jual/kg</th>
-                    <th className="pb-3 font-medium">Lahan</th>
-                    <th className="pb-3 font-medium">Desa</th>
                     <th className="pb-3 font-medium">Catatan</th>
                     <th className="pb-3 font-medium">Aksi</th>
                   </tr>
@@ -270,18 +323,15 @@ export default function PanenPage() {
                       <td className="py-3 text-gray-700">
                         {new Date(p.tanggalPanen).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className="py-3 font-medium text-gray-800">{p.petani.name}</td>
+                      <td className="py-3 font-medium text-gray-800">{p.farm.name}</td>
                       <td className="py-3">
-                        <Badge variant="info">{p.komoditas}</Badge>
+                        <Badge variant="info">{p.plantType.name}</Badge>
                       </td>
+                      <td className="py-3 text-gray-500">{p.petani.name}</td>
                       <td className="py-3 font-semibold text-green-700">{p.jumlahKg} kg</td>
                       <td className="py-3 text-gray-600">
                         {p.hargaJual ? `Rp ${p.hargaJual.toLocaleString('id-ID')}` : <span className="text-gray-300">—</span>}
                       </td>
-                      <td className="py-3 text-gray-500 text-xs">
-                        {p.lahan ? (p.lahan.blockLocation || p.lahan.commodity || '-') : <span className="text-gray-300">—</span>}
-                      </td>
-                      <td className="py-3 text-gray-500">{p.village.name}</td>
                       <td className="py-3 text-gray-400 text-xs max-w-[150px] truncate">{p.catatan || '—'}</td>
                       <td className="py-3">
                         <div className="flex gap-1">
@@ -311,17 +361,33 @@ export default function PanenPage() {
                 {editId ? 'Edit Data Panen' : 'Tambah Data Panen'}
               </h2>
               <div className="space-y-4">
+                {/* Garden picker — plant type auto-fills from it */}
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Kebun *</label>
+                  <select
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                    value={form.farmId}
+                    onChange={e => setForm(f => ({ ...f, farmId: e.target.value }))}
+                  >
+                    <option value="">Pilih Kebun</option>
+                    {farms.map(f => (
+                      <option key={f.id} value={f.id}>{f.name} — {f.plantType.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Auto plant type (read-only) */}
+                <Input
+                  label="Jenis Tanaman (otomatis dari kebun)"
+                  value={selectedFarm?.plantType.name || '-'}
+                  disabled
+                />
+
                 <Input
                   label="Tanggal Panen *"
                   type="date"
                   value={form.tanggalPanen}
                   onChange={e => setForm(f => ({ ...f, tanggalPanen: e.target.value }))}
-                />
-                <Input
-                  label="Komoditas *"
-                  placeholder="Contoh: Selada, Bayam, Kangkung"
-                  value={form.komoditas}
-                  onChange={e => setForm(f => ({ ...f, komoditas: e.target.value }))}
                 />
                 <Input
                   label="Jumlah Hasil Panen (kg) *"
@@ -340,56 +406,6 @@ export default function PanenPage() {
                   value={form.hargaJual}
                   onChange={e => setForm(f => ({ ...f, hargaJual: e.target.value }))}
                 />
-
-                {/* Village — auto-filled or dropdown for Super Admin */}
-                {isSuperAdmin ? (
-                  <div className="w-full">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Desa *</label>
-                    <select
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                      value={form.villageId}
-                      onChange={e => setForm(f => ({ ...f, villageId: e.target.value }))}
-                    >
-                      <option value="">Pilih Desa</option>
-                      {villages.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                    </select>
-                  </div>
-                ) : (
-                  <Input label="Desa" value={user?.village?.name || '-'} disabled />
-                )}
-
-                {/* Petani — only admin can pick */}
-                {!isFarmer && (
-                  <div className="w-full">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Petani</label>
-                    <select
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                      value={form.petaniId}
-                      onChange={e => setForm(f => ({ ...f, petaniId: e.target.value }))}
-                    >
-                      <option value="">Pilih Petani (opsional)</option>
-                      {anggota.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                    </select>
-                  </div>
-                )}
-
-                {/* Lahan */}
-                <div className="w-full">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Lahan (opsional)</label>
-                  <select
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                    value={form.lahanId}
-                    onChange={e => setForm(f => ({ ...f, lahanId: e.target.value }))}
-                  >
-                    <option value="">Pilih Lahan</option>
-                    {lahans.map(l => (
-                      <option key={l.id} value={l.id}>
-                        {l.blockLocation || l.commodity || l.id.slice(0, 8)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 <div className="w-full">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
                   <textarea
@@ -406,7 +422,7 @@ export default function PanenPage() {
                 <Button variant="outline" className="flex-1" onClick={() => setShowModal(false)} disabled={saving}>
                   Batal
                 </Button>
-                <Button className="flex-1" onClick={save} disabled={saving || !form.tanggalPanen || !form.komoditas || !form.jumlahKg || !form.villageId}>
+                <Button className="flex-1" onClick={save} disabled={saving || !form.tanggalPanen || !form.farmId || !form.jumlahKg}>
                   {saving ? 'Menyimpan...' : editId ? 'Simpan Perubahan' : 'Tambah Panen'}
                 </Button>
               </div>
