@@ -63,9 +63,9 @@ export default function PanenPage() {
 
       const [panenData, lahanData, ...rest] = await Promise.all(calls)
       setPanens(panenData as Panen[])
-      setLahans(lahanData as Lahan[])
-      if (!isFarmer && rest[0]) setAnggota(rest[0] as Petani[])
-      if (isSuperAdmin && rest[1]) setVillages(rest[1] as Village[])
+      setLahans((lahanData as { lahans: Lahan[] }).lahans || [])
+      if (!isFarmer && rest[0]) setAnggota((rest[0] as { members: Petani[] }).members || [])
+      if (isSuperAdmin && rest[1]) setVillages((rest[1] as { villages: Village[] }).villages || [])
     } finally {
       setLoading(false)
     }
