@@ -16,6 +16,7 @@ type Panen = {
   komoditas: string
   jumlahKg: number
   hargaJual: number | null
+  kondisi: string
   catatan: string | null
   petani: { id: string; name: string }
   village: { id: string; name: string }
@@ -23,11 +24,17 @@ type Panen = {
   plantType: { id: string; name: string }
 }
 
+const KONDISI_OPTIONS = ['Baik', 'Sedang', 'Kurang']
+const KONDISI_COLORS: Record<string, 'success' | 'warning' | 'danger'> = {
+  Baik: 'success', Sedang: 'warning', Kurang: 'danger',
+}
+
 const EMPTY_FORM = {
   tanggalPanen: '',
   farmId: '',
   jumlahKg: '',
   hargaJual: '',
+  kondisi: 'Baik',
   catatan: '',
 }
 
@@ -74,6 +81,7 @@ export default function PanenPage() {
       farmId: p.farm.id,
       jumlahKg: String(p.jumlahKg),
       hargaJual: p.hargaJual != null ? String(p.hargaJual) : '',
+      kondisi: p.kondisi || 'Baik',
       catatan: p.catatan || '',
     })
     setShowModal(true)
@@ -279,6 +287,10 @@ export default function PanenPage() {
               <p className="text-xs text-gray-500 mb-1">
                 {new Date(p.tanggalPanen).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs text-gray-400">Kondisi:</span>
+                <Badge variant={KONDISI_COLORS[p.kondisi] || 'default'}>{p.kondisi || 'Baik'}</Badge>
+              </div>
               {p.hargaJual && <p className="text-xs text-gray-400">Harga: Rp {p.hargaJual.toLocaleString('id-ID')}/kg</p>}
               {p.catatan && <p className="text-xs text-gray-400 mt-1 italic">{p.catatan}</p>}
               <div className="flex gap-2 mt-3">
@@ -313,6 +325,7 @@ export default function PanenPage() {
                     <th className="pb-3 font-medium">Petani</th>
                     <th className="pb-3 font-medium">Jumlah (kg)</th>
                     <th className="pb-3 font-medium">Harga Jual/kg</th>
+                    <th className="pb-3 font-medium">Kondisi Panen</th>
                     <th className="pb-3 font-medium">Catatan</th>
                     <th className="pb-3 font-medium">Aksi</th>
                   </tr>
@@ -331,6 +344,9 @@ export default function PanenPage() {
                       <td className="py-3 font-semibold text-green-700">{p.jumlahKg} kg</td>
                       <td className="py-3 text-gray-600">
                         {p.hargaJual ? `Rp ${p.hargaJual.toLocaleString('id-ID')}` : <span className="text-gray-300">—</span>}
+                      </td>
+                      <td className="py-3">
+                        <Badge variant={KONDISI_COLORS[p.kondisi] || 'default'}>{p.kondisi || 'Baik'}</Badge>
                       </td>
                       <td className="py-3 text-gray-400 text-xs max-w-[150px] truncate">{p.catatan || '—'}</td>
                       <td className="py-3">
@@ -406,6 +422,16 @@ export default function PanenPage() {
                   value={form.hargaJual}
                   onChange={e => setForm(f => ({ ...f, hargaJual: e.target.value }))}
                 />
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Kondisi Panen</label>
+                  <select
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                    value={form.kondisi}
+                    onChange={e => setForm(f => ({ ...f, kondisi: e.target.value }))}
+                  >
+                    {KONDISI_OPTIONS.map(k => <option key={k} value={k}>{k}</option>)}
+                  </select>
+                </div>
                 <div className="w-full">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
                   <textarea

@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const { tanggalPanen, farmId, jumlahKg, hargaJual, catatan } = body
+  const { tanggalPanen, farmId, jumlahKg, hargaJual, kondisi, catatan } = body
 
   if (!tanggalPanen || !farmId || !jumlahKg) {
     return NextResponse.json({ error: 'Tanggal panen, kebun, dan jumlah wajib diisi' }, { status: 400 })
@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       komoditas: farm.plantType.name,
       jumlahKg: parseFloat(jumlahKg),
       hargaJual: hargaJual ? parseFloat(hargaJual) : null,
+      kondisi: kondisi || 'Baik',
       catatan: catatan || null,
       farmId: farm.id,
       plantTypeId: farm.plantType.id,

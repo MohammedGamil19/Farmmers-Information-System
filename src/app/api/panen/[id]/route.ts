@@ -10,7 +10,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params
   const body = await request.json()
-  const { tanggalPanen, farmId, jumlahKg, hargaJual, catatan } = body
+  const { tanggalPanen, farmId, jumlahKg, hargaJual, kondisi, catatan } = body
 
   const existing = await prisma.panen.findUnique({ where: { id } })
   if (!existing || !existing.isActive) return NextResponse.json({ error: 'Not found' }, { status: 404 })
@@ -53,6 +53,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       ...(tanggalPanen && { tanggalPanen: new Date(tanggalPanen) }),
       ...(jumlahKg && { jumlahKg: parseFloat(jumlahKg) }),
       hargaJual: hargaJual ? parseFloat(hargaJual) : null,
+      ...(kondisi && { kondisi }),
       catatan: catatan || null,
       ...derived,
     },

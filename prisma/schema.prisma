@@ -233,6 +233,7 @@ model Panen {
   komoditas     String
   jumlahKg      Float
   hargaJual     Float?
+  kondisi       String   @default("Baik")
   catatan       String?
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
