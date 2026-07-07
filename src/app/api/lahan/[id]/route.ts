@@ -30,13 +30,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       ownershipStatus: body.ownershipStatus,
       commodity: body.commodity ?? null,
       description: body.description ?? null,
-      kelompokTaniId: body.kelompokTaniId ?? null,
       ...(body.ownerId && user.role !== 'FARMER' ? { ownerId: body.ownerId } : {}),
     },
     include: {
       owner: { select: { id: true, name: true } },
       village: { select: { id: true, name: true } },
-      kelompokTani: { select: { id: true, name: true } },
     },
   })
   return NextResponse.json({ lahan })

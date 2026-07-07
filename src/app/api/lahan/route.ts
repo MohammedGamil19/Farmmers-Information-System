@@ -10,7 +10,6 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const ownerId = searchParams.get('ownerId')
-  const kelompokId = searchParams.get('kelompokId')
 
   const where: Record<string, unknown> = { isActive: true }
 
@@ -21,14 +20,12 @@ export async function GET(request: NextRequest) {
     if (vid) where.villageId = vid
   }
   if (ownerId && user.role !== 'FARMER') where.ownerId = ownerId
-  if (kelompokId) where.kelompokTaniId = kelompokId
 
   const lahans = await prisma.lahan.findMany({
     where,
     include: {
       owner: { select: { id: true, name: true, phone: true } },
       village: { select: { id: true, name: true } },
-      kelompokTani: { select: { id: true, name: true } },
     },
     orderBy: { createdAt: 'desc' },
   })
@@ -41,7 +38,7 @@ export async function POST(request: NextRequest) {
   const user = getUserFromRequest(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json()
-  const { area, blockLocation, soilType, ownershipStatus, commodity, description, villageId, kelompokTaniId, ownerId } = body
+  const { area, blockLocation, soilType, ownershipStatus, commodity, description, villageId, ownerId } = body
   if (!area || !villageId) return NextResponse.json({ error: 'Luas lahan dan desa wajib diisi' }, { status: 400 })
   const resolvedOwnerId = user.role === 'FARMER' ? user.userId : (ownerId || user.userId)
   const lahan = await prisma.lahan.create({
@@ -54,12 +51,10 @@ export async function POST(request: NextRequest) {
       description: description || null,
       ownerId: resolvedOwnerId,
       villageId,
-      kelompokTaniId: kelompokTaniId || null,
     },
     include: {
       owner: { select: { id: true, name: true } },
       village: { select: { id: true, name: true } },
-      kelompokTani: { select: { id: true, name: true } },
     },
   })
   return NextResponse.json({ lahan }, { status: 201 })

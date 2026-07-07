@@ -15,10 +15,8 @@ type Member = {
   id: string; name: string; email: string; phone?: string; nik?: string
   address?: string; rt?: string; rw?: string; memberStatus: string; isActive: boolean
   village?: { id: string; name: string }
-  kelompokTani?: { id: string; name: string }
   _count: { lahans: number; farms: number }
 }
-type KelompokTani = { id: string; name: string }
 type Village = { id: string; name: string }
 
 const STATUS_COLORS: Record<string, 'success' | 'warning' | 'danger'> = {
@@ -28,16 +26,14 @@ const STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Aktif', PENDING: 'Pending', INACTIVE: 'Nonaktif',
 }
 
-const EMPTY_FORM = { name: '', email: '', password: '', phone: '', nik: '', address: '', rt: '', rw: '', villageId: '', kelompokTaniId: '', memberStatus: 'ACTIVE' }
+const EMPTY_FORM = { name: '', email: '', password: '', phone: '', nik: '', address: '', rt: '', rw: '', villageId: '', memberStatus: 'ACTIVE' }
 
 export default function AnggotaPage() {
   const { user } = useAuth()
   const [members, setMembers] = useState<Member[]>([])
-  const [kelompoks, setKelompoks] = useState<KelompokTani[]>([])
   const [villages, setVillages] = useState<Village[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filterKelompok, setFilterKelompok] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Member | null>(null)
@@ -47,27 +43,24 @@ export default function AnggotaPage() {
   const load = () => {
     setLoading(true)
     const params = new URLSearchParams()
-    if (filterKelompok) params.set('kelompokId', filterKelompok)
     if (filterStatus) params.set('memberStatus', filterStatus)
     if (search) params.set('search', search)
     const calls: Promise<unknown>[] = [
       api.get(`/api/anggota?${params}`),
-      api.get('/api/kelompok-tani'),
     ]
     if (user?.role !== 'FARMER') calls.push(api.get('/api/villages'))
-    Promise.all(calls).then(([m, k, v]) => {
+    Promise.all(calls).then(([m, v]) => {
       setMembers((m as { members: Member[] }).members)
-      setKelompoks((k as { kelompoks: KelompokTani[] }).kelompoks)
       if (v) setVillages((v as { villages: Village[] }).villages)
     }).finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [filterKelompok, filterStatus])
+  useEffect(() => { load() }, [filterStatus])
 
   const openNew = () => { setEditing(null); setForm({ ...EMPTY_FORM, villageId: user?.village?.id || '' }); setShowModal(true) }
   const openEdit = (m: Member) => {
     setEditing(m)
-    setForm({ name: m.name, email: m.email, password: '', phone: m.phone || '', nik: m.nik || '', address: m.address || '', rt: m.rt || '', rw: m.rw || '', villageId: m.village?.id || '', kelompokTaniId: m.kelompokTani?.id || '', memberStatus: m.memberStatus })
+    setForm({ name: m.name, email: m.email, password: '', phone: m.phone || '', nik: m.nik || '', address: m.address || '', rt: m.rt || '', rw: m.rw || '', villageId: m.village?.id || '', memberStatus: m.memberStatus })
     setShowModal(true)
   }
 
@@ -116,10 +109,6 @@ export default function AnggotaPage() {
           <input value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === 'Enter' && load()}
             placeholder="Cari nama, NIK, atau no. HP..." className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-green-500" />
         </div>
-        <div className="w-full sm:w-48">
-          <Select label="" value={filterKelompok} onChange={e => setFilterKelompok(e.target.value)}
-            options={[{ value: '', label: 'Semua Kelompok' }, ...kelompoks.map(k => ({ value: k.id, label: k.name }))]} />
-        </div>
         <div className="w-full sm:w-44">
           <Select label="" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
             options={[{ value: '', label: 'Semua Status' }, { value: 'ACTIVE', label: 'Aktif' }, { value: 'PENDING', label: 'Pending' }, { value: 'INACTIVE', label: 'Nonaktif' }]} />
@@ -146,7 +135,6 @@ export default function AnggotaPage() {
                         {(m.rt || m.rw || m.address) && <p className="text-xs text-gray-500 flex items-center gap-1"><MapPin size={11} />{[m.address, m.rt && `RT ${m.rt}`, m.rw && `RW ${m.rw}`].filter(Boolean).join(', ')}</p>}
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
                           <Badge variant={STATUS_COLORS[m.memberStatus] || 'default'}>{STATUS_LABELS[m.memberStatus]}</Badge>
-                          {m.kelompokTani && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{m.kelompokTani.name}</span>}
                         </div>
                         <p className="text-xs text-gray-400 mt-1">{m._count.lahans} lahan · {m._count.farms} kebun</p>
                       </div>
@@ -168,7 +156,6 @@ export default function AnggotaPage() {
                     <th className="px-4 py-3 font-medium">NIK</th>
                     <th className="px-4 py-3 font-medium">Alamat (RT/RW)</th>
                     <th className="px-4 py-3 font-medium">No. HP</th>
-                    <th className="px-4 py-3 font-medium">Kelompok Tani</th>
                     <th className="px-4 py-3 font-medium">Status</th>
                     <th className="px-4 py-3 font-medium">Lahan</th>
                     {user?.role !== 'FARMER' && <th className="px-4 py-3 font-medium">Aksi</th>}
@@ -180,7 +167,6 @@ export default function AnggotaPage() {
                         <td className="px-4 py-3 text-gray-600 text-xs">{m.nik || '-'}</td>
                         <td className="px-4 py-3 text-gray-600 text-xs">{m.address || ''}{m.rt && ` RT ${m.rt}`}{m.rw && ` RW ${m.rw}` || '-'}</td>
                         <td className="px-4 py-3 text-gray-600">{m.phone || '-'}</td>
-                        <td className="px-4 py-3">{m.kelompokTani ? <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">{m.kelompokTani.name}</span> : <span className="text-gray-400">-</span>}</td>
                         <td className="px-4 py-3"><Badge variant={STATUS_COLORS[m.memberStatus] || 'default'}>{STATUS_LABELS[m.memberStatus]}</Badge></td>
                         <td className="px-4 py-3 text-gray-600">{m._count.lahans} lahan</td>
                         {user?.role !== 'FARMER' && (
@@ -219,16 +205,12 @@ export default function AnggotaPage() {
             <Input label="RW" value={form.rw} onChange={e => setForm({ ...form, rw: e.target.value })} placeholder="002" />
             <Input label="No. HP" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="08xxxxxxxxxx" />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {user?.role === 'SUPER_ADMIN' ? (
-              <Select label="Desa" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
-                options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
-            ) : (
-              <Input label="Desa" value={user?.village?.name || '-'} disabled />
-            )}
-            <Select label="Kelompok Tani" value={form.kelompokTaniId} onChange={e => setForm({ ...form, kelompokTaniId: e.target.value })}
-              options={[{ value: '', label: '-- Pilih Kelompok --' }, ...kelompoks.map(k => ({ value: k.id, label: k.name }))]} />
-          </div>
+          {user?.role === 'SUPER_ADMIN' ? (
+            <Select label="Desa" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
+              options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
+          ) : (
+            <Input label="Desa" value={user?.village?.name || '-'} disabled />
+          )}
           <Select label="Status Keanggotaan" value={form.memberStatus} onChange={e => setForm({ ...form, memberStatus: e.target.value })}
             options={[{ value: 'ACTIVE', label: 'Aktif' }, { value: 'PENDING', label: 'Pending' }, { value: 'INACTIVE', label: 'Nonaktif' }]} />
           <div className="flex gap-3 pt-2">

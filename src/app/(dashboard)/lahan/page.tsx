@@ -16,22 +16,19 @@ type Lahan = {
   ownershipStatus: string; commodity?: string; description?: string
   owner: { id: string; name: string }
   village: { id: string; name: string }
-  kelompokTani?: { id: string; name: string }
 }
-type KelompokTani = { id: string; name: string }
 type Village = { id: string; name: string }
 type Farmer = { id: string; name: string }
 
 const OWN_LABELS: Record<string, string> = { OWNED: 'Milik Sendiri', RENTED: 'Sewa', MORTGAGED: 'Gadai' }
 const OWN_COLORS: Record<string, 'success' | 'warning' | 'danger'> = { OWNED: 'success', RENTED: 'warning', MORTGAGED: 'danger' }
 
-const EMPTY_FORM = { area: '', blockLocation: '', soilType: '', ownershipStatus: 'OWNED', commodity: '', description: '', villageId: '', kelompokTaniId: '', ownerId: '' }
+const EMPTY_FORM = { area: '', blockLocation: '', soilType: '', ownershipStatus: 'OWNED', commodity: '', description: '', villageId: '', ownerId: '' }
 
 export default function LahanPage() {
   const { user } = useAuth()
   const [lahans, setLahans] = useState<Lahan[]>([])
   const [totalArea, setTotalArea] = useState(0)
-  const [kelompoks, setKelompoks] = useState<KelompokTani[]>([])
   const [villages, setVillages] = useState<Village[]>([])
   const [farmers, setFarmers] = useState<Farmer[]>([])
   const [loading, setLoading] = useState(true)
@@ -44,13 +41,11 @@ export default function LahanPage() {
     setLoading(true)
     const calls: Promise<unknown>[] = [
       api.get('/api/lahan'),
-      api.get('/api/kelompok-tani'),
     ]
     if (user?.role !== 'FARMER') calls.push(api.get('/api/villages'), api.get('/api/anggota'))
-    Promise.all(calls).then(([l, k, v, a]) => {
+    Promise.all(calls).then(([l, v, a]) => {
       const ld = l as { lahans: Lahan[]; totalArea: number }
       setLahans(ld.lahans); setTotalArea(ld.totalArea)
-      setKelompoks((k as { kelompoks: KelompokTani[] }).kelompoks)
       if (v) setVillages((v as { villages: Village[] }).villages)
       if (a) setFarmers((a as { members: Farmer[] }).members)
     }).finally(() => setLoading(false))
@@ -63,7 +58,7 @@ export default function LahanPage() {
   const openNew = () => { setEditing(null); setForm({ ...EMPTY_FORM, villageId: getDefaultVillageId() }); setShowModal(true) }
   const openEdit = (l: Lahan) => {
     setEditing(l)
-    setForm({ area: String(l.area), blockLocation: l.blockLocation || '', soilType: l.soilType || '', ownershipStatus: l.ownershipStatus, commodity: l.commodity || '', description: l.description || '', villageId: l.village.id, kelompokTaniId: l.kelompokTani?.id || '', ownerId: l.owner.id })
+    setForm({ area: String(l.area), blockLocation: l.blockLocation || '', soilType: l.soilType || '', ownershipStatus: l.ownershipStatus, commodity: l.commodity || '', description: l.description || '', villageId: l.village.id, ownerId: l.owner.id })
     setShowModal(true)
   }
 
@@ -131,7 +126,6 @@ export default function LahanPage() {
                       {l.soilType && <p className="text-xs text-gray-500">Tanah: {l.soilType}</p>}
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
                         <Badge variant={OWN_COLORS[l.ownershipStatus]}>{OWN_LABELS[l.ownershipStatus]}</Badge>
-                        {l.kelompokTani && <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">{l.kelompokTani.name}</span>}
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
@@ -151,7 +145,6 @@ export default function LahanPage() {
                     <th className="px-4 py-3 font-medium">Jenis Tanah</th>
                     <th className="px-4 py-3 font-medium">Kepemilikan</th>
                     <th className="px-4 py-3 font-medium">Komoditas</th>
-                    <th className="px-4 py-3 font-medium">Kelompok</th>
                     <th className="px-4 py-3 font-medium">Aksi</th>
                   </tr></thead>
                   <tbody className="divide-y">
@@ -163,7 +156,6 @@ export default function LahanPage() {
                         <td className="px-4 py-3 text-gray-600">{l.soilType || '-'}</td>
                         <td className="px-4 py-3"><Badge variant={OWN_COLORS[l.ownershipStatus]}>{OWN_LABELS[l.ownershipStatus]}</Badge></td>
                         <td className="px-4 py-3 text-gray-600">{l.commodity || '-'}</td>
-                        <td className="px-4 py-3">{l.kelompokTani ? <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">{l.kelompokTani.name}</span> : <span className="text-gray-400">-</span>}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
                             <button onClick={() => openEdit(l)} className="text-blue-600 hover:text-blue-800 p-1"><Pencil size={14} /></button>
@@ -192,16 +184,12 @@ export default function LahanPage() {
               options={[{ value: 'OWNED', label: 'Milik Sendiri' }, { value: 'RENTED', label: 'Sewa' }, { value: 'MORTGAGED', label: 'Gadai' }]} />
           </div>
           <Input label="Komoditas yang Ditanam" value={form.commodity} onChange={e => setForm({ ...form, commodity: e.target.value })} placeholder="Padi, Jagung, Sayuran, dll" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {user?.role === 'SUPER_ADMIN' ? (
-              <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
-                options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
-            ) : (
-              <Input label="Desa" value={user?.village?.name || '-'} disabled />
-            )}
-            <Select label="Kelompok Tani" value={form.kelompokTaniId} onChange={e => setForm({ ...form, kelompokTaniId: e.target.value })}
-              options={[{ value: '', label: '-- Pilih Kelompok --' }, ...kelompoks.map(k => ({ value: k.id, label: k.name }))]} />
-          </div>
+          {user?.role === 'SUPER_ADMIN' ? (
+            <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
+              options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
+          ) : (
+            <Input label="Desa" value={user?.village?.name || '-'} disabled />
+          )}
           {user?.role !== 'FARMER' && farmers.length > 0 && (
             <Select label="Petani Pemilik" value={form.ownerId} onChange={e => setForm({ ...form, ownerId: e.target.value })}
               options={[{ value: '', label: '-- Pilih Petani --' }, ...farmers.map(f => ({ value: f.id, label: f.name }))]} />

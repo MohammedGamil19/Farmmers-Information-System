@@ -80,8 +80,6 @@ model User {
 
   villageId      String?
   village        Village?      @relation(fields: [villageId], references: [id])
-  kelompokTaniId String?
-  kelompokTani   KelompokTani? @relation(fields: [kelompokTaniId], references: [id])
 
   farms          Farm[]
   notifications  Notification[]
@@ -106,30 +104,12 @@ model Village {
 
   users          User[]
   farms          Farm[]
-  kelompokTanis  KelompokTani[]
   lahans         Lahan[]
   announcements  Announcement[]
   calendarEvents CalendarEvent[]
   panens         Panen[]
 
   @@map("villages")
-}
-
-model KelompokTani {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  villageId String
-  village   Village @relation(fields: [villageId], references: [id])
-
-  members User[]
-  lahans  Lahan[]
-
-  @@map("kelompok_tani")
 }
 
 model PlantType {
@@ -188,12 +168,10 @@ model Lahan {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
-  ownerId        String
-  owner          User          @relation(fields: [ownerId], references: [id])
-  villageId      String
-  village        Village       @relation(fields: [villageId], references: [id])
-  kelompokTaniId String?
-  kelompokTani   KelompokTani? @relation(fields: [kelompokTaniId], references: [id])
+  ownerId   String
+  owner     User    @relation(fields: [ownerId], references: [id])
+  villageId String
+  village   Village @relation(fields: [villageId], references: [id])
 
   @@map("lahans")
 }

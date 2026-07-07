@@ -22,7 +22,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       rt: body.rt ?? null,
       rw: body.rw ?? null,
       villageId: body.villageId ?? null,
-      kelompokTaniId: body.kelompokTaniId ?? null,
       memberStatus: body.memberStatus,
       isActive: body.isActive,
     },
@@ -30,7 +29,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       id: true, name: true, email: true, phone: true, nik: true,
       address: true, rt: true, rw: true, memberStatus: true, isActive: true,
       village: { select: { id: true, name: true } },
-      kelompokTani: { select: { id: true, name: true } },
     },
   })
   return NextResponse.json({ member })

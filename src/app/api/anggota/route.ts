@@ -10,7 +10,6 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(request.url)
-  const kelompokId = searchParams.get('kelompokId')
   const memberStatus = searchParams.get('memberStatus')
   const search = searchParams.get('search')
 
@@ -23,7 +22,6 @@ export async function GET(request: NextRequest) {
     const u = await prisma.user.findUnique({ where: { id: user.userId }, select: { villageId: true } })
     if (u?.villageId) where.villageId = u.villageId
   }
-  if (kelompokId) where.kelompokTaniId = kelompokId
   if (memberStatus) where.memberStatus = memberStatus
   if (search) {
     where.OR = [
@@ -40,7 +38,6 @@ export async function GET(request: NextRequest) {
       address: true, rt: true, rw: true, memberStatus: true, isActive: true,
       createdAt: true,
       village: { select: { id: true, name: true } },
-      kelompokTani: { select: { id: true, name: true } },
       _count: { select: { lahans: true, farms: true } },
     },
     orderBy: { name: 'asc' },
@@ -52,7 +49,7 @@ export async function POST(request: NextRequest) {
   const user = getUserFromRequest(request)
   if (!user || user.role === 'FARMER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const body = await request.json()
-  const { name, email, password, phone, nik, address, rt, rw, villageId, kelompokTaniId, memberStatus } = body
+  const { name, email, password, phone, nik, address, rt, rw, villageId, memberStatus } = body
   if (!name || !email || !password) return NextResponse.json({ error: 'Nama, email, dan password wajib diisi' }, { status: 400 })
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) return NextResponse.json({ error: 'Email sudah digunakan' }, { status: 400 })
@@ -67,14 +64,12 @@ export async function POST(request: NextRequest) {
       nik: nik || null, address: address || null,
       rt: rt || null, rw: rw || null,
       villageId: villageId || null,
-      kelompokTaniId: kelompokTaniId || null,
       memberStatus: memberStatus || 'ACTIVE',
     },
     select: {
       id: true, name: true, email: true, phone: true, nik: true,
       address: true, rt: true, rw: true, memberStatus: true,
       village: { select: { id: true, name: true } },
-      kelompokTani: { select: { id: true, name: true } },
     },
   })
   return NextResponse.json({ member }, { status: 201 })

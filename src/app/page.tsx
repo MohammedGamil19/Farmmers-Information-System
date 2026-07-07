@@ -24,7 +24,7 @@ const CMS_DEFAULTS = {
   cms_gallery: [] as { url: string; caption: string }[],
   cms_features: [
     { icon: 'Leaf', title: 'Dokumentasi Data Panen', desc: 'Catat dan kelola data hasil panen, komoditas, jumlah produksi, dan nilai jual secara digital dan terstruktur.' },
-    { icon: 'Users', title: 'Manajemen Data GAPOKTAN', desc: 'Kelola data anggota, lahan, dan kelompok tani dalam satu platform terpadu.' },
+    { icon: 'Users', title: 'Manajemen Data GAPOKTAN', desc: 'Kelola data anggota dan lahan pertanian dalam satu platform terpadu.' },
     { icon: 'BarChart3', title: 'Analitik Produksi', desc: 'Pantau tren produksi panen dan performa pertanian dari waktu ke waktu.' },
     { icon: 'Bell', title: 'Notifikasi & Pengumuman', desc: 'Informasi kegiatan dan pengumuman GAPOKTAN tersampaikan secara real-time.' },
     { icon: 'Shield', title: 'Manajemen Peran', desc: 'Akses terpisah untuk Super Admin, Admin Desa, dan Petani.' },
