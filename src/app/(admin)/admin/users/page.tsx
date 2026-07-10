@@ -103,6 +103,7 @@ export default function AdminUsersPage() {
                     <th className="px-4 py-3 font-medium">Desa</th>
                     <th className="px-4 py-3 font-medium">No. HP</th>
                     <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Terakhir Masuk</th>
                     <th className="px-4 py-3 font-medium">Aksi</th>
                   </tr></thead>
                   <tbody className="divide-y">
@@ -116,6 +117,7 @@ export default function AdminUsersPage() {
                           <td className="px-4 py-3 text-gray-600">{village?.name as string || '-'}</td>
                           <td className="px-4 py-3 text-gray-600">{u.phone as string || '-'}</td>
                           <td className="px-4 py-3"><Badge variant={u.isActive ? 'success' : 'danger'}>{u.isActive ? 'Aktif' : 'Nonaktif'}</Badge></td>
+                          <td className="px-4 py-3 text-gray-500 text-xs">{u.lastLoginAt ? formatDate(u.lastLoginAt as string) : 'Belum pernah'}</td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
                               <button onClick={() => openEdit(u)} className="text-blue-600 hover:text-blue-800 p-1"><Pencil size={15} /></button>
@@ -125,7 +127,7 @@ export default function AdminUsersPage() {
                         </tr>
                       )
                     })}
-                    {users.length === 0 && <tr><td colSpan={7} className="text-center text-gray-400 py-10">Belum ada pengguna</td></tr>}
+                    {users.length === 0 && <tr><td colSpan={8} className="text-center text-gray-400 py-10">Belum ada pengguna</td></tr>}
                   </tbody>
                 </table>
               </div>

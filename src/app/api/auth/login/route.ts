@@ -5,18 +5,26 @@ import { comparePassword, signToken } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email dan password wajib diisi' }, { status: 400 })
+    const body = await request.json()
+    // Accept login by email OR phone number (villagers often have no email)
+    const identifier: string = (body.identifier ?? body.email ?? '').trim()
+    const password: string = body.password
+    if (!identifier || !password) {
+      return NextResponse.json({ error: 'Email/No. HP dan password wajib diisi' }, { status: 400 })
     }
-    const user = await prisma.user.findUnique({ where: { email }, include: { village: true } })
+    const user = await prisma.user.findFirst({
+      where: { OR: [{ email: identifier }, { phone: identifier }] },
+      include: { village: true },
+    })
     if (!user || !user.isActive) {
-      return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 })
+      return NextResponse.json({ error: 'Email/No. HP atau password salah' }, { status: 401 })
     }
     const valid = await comparePassword(password, user.password)
     if (!valid) {
-      return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 })
+      return NextResponse.json({ error: 'Email/No. HP atau password salah' }, { status: 401 })
     }
+    // Record last login (best-effort, non-blocking on failure)
+    prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } }).catch(() => {})
     const token = signToken({ userId: user.id, email: user.email, role: user.role, name: user.name })
     const response = NextResponse.json({
       user: { id: user.id, name: user.name, email: user.email, role: user.role, village: user.village },

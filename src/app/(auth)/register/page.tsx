@@ -34,6 +34,10 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
 
+    if (!phone.trim()) {
+      setError('No. HP wajib diisi')
+      return
+    }
     if (password.length < 6) {
       setError('Password minimal 6 karakter')
       return
@@ -45,7 +49,7 @@ export default function RegisterPage() {
 
     setLoading(true)
     try {
-      await register({ name, email, password, phone: phone || undefined, villageId: villageId || undefined })
+      await register({ name, phone, password, email: email || undefined, villageId: villageId || undefined })
       router.push('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Pendaftaran gagal')
@@ -71,8 +75,8 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Nama Lengkap *" value={name} onChange={e => setName(e.target.value)} placeholder="Nama Anda" required />
-          <Input label="Email *" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="petani@desa.id" required />
-          <Input label="No. HP" value={phone} onChange={e => setPhone(e.target.value)} placeholder="08xxxxxxxxxx" />
+          <Input label="No. HP *" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="08xxxxxxxxxx" required />
+          <Input label="Email (opsional)" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Boleh dikosongkan" />
           <Select
             label="Desa"
             value={villageId}

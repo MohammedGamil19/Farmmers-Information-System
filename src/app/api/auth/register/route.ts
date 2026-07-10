@@ -8,15 +8,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, email, password, phone, villageId } = body
 
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: 'Nama, email, dan password wajib diisi' }, { status: 400 })
+    // Phone is the primary identifier for villagers; email is optional
+    if (!name || !phone || !password) {
+      return NextResponse.json({ error: 'Nama, No. HP, dan password wajib diisi' }, { status: 400 })
     }
     if (password.length < 6) {
       return NextResponse.json({ error: 'Password minimal 6 karakter' }, { status: 400 })
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } })
-    if (existing) {
+    // A phone number can only be registered once
+    const phoneTaken = await prisma.user.findFirst({ where: { phone } })
+    if (phoneTaken) {
+      return NextResponse.json({ error: 'No. HP sudah terdaftar' }, { status: 400 })
+    }
+
+    // Use the given email, or synthesize a placeholder so the unique constraint holds
+    const finalEmail: string = (email && String(email).trim()) ? String(email).trim() : `${phone}@warga.local`
+    const emailTaken = await prisma.user.findUnique({ where: { email: finalEmail } })
+    if (emailTaken) {
       return NextResponse.json({ error: 'Email sudah digunakan' }, { status: 400 })
     }
 
@@ -24,11 +33,13 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: finalEmail,
         password: hashed,
         role: 'FARMER',
-        phone: phone || null,
+        phone,
         villageId: villageId || null,
+        // Self-registered villagers await admin approval
+        memberStatus: 'PENDING',
       },
       include: { village: true },
       omit: { password: true },

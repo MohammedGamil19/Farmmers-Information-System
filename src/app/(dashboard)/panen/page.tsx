@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Pencil, Trash2, Wheat, Scale, TrendingUp, Sprout, Leaf } from 'lucide-react'
+import { toast } from '@/components/ui/toaster'
 
 type PlantType = { id: string; name: string }
 type Farm = { id: string; name: string; plantType: PlantType; owner?: { id: string; name: string } }
@@ -99,8 +100,9 @@ export default function PanenPage() {
       }
       setShowModal(false)
       await load()
+      toast('success', editId ? 'Data panen diperbarui' : 'Data panen ditambahkan')
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Gagal menyimpan')
+      toast('error', e instanceof Error ? e.message : 'Gagal menyimpan')
     } finally {
       setSaving(false)
       submitLock.current = false

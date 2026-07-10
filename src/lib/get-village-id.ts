@@ -5,15 +5,17 @@
  */
 import { prisma } from './prisma'
 
-const cache = new Map<string, string | null>()
+const TTL_MS = 60_000 // re-check the DB at most once a minute per user
+const cache = new Map<string, { villageId: string | null; at: number }>()
 
 export async function getAdminVillageId(userId: string): Promise<string | null> {
-  if (cache.has(userId)) return cache.get(userId)!
+  const hit = cache.get(userId)
+  if (hit && Date.now() - hit.at < TTL_MS) return hit.villageId
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { villageId: true },
   })
   const villageId = user?.villageId ?? null
-  cache.set(userId, villageId)
+  cache.set(userId, { villageId, at: Date.now() })
   return villageId
 }

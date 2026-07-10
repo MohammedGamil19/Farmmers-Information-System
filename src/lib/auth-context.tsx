@@ -12,8 +12,8 @@ interface User {
 interface AuthContextType {
   user: User | null
   token: string | null
-  login: (email: string, password: string) => Promise<void>
-  register: (data: { name: string; email: string; password: string; phone?: string; villageId?: string }) => Promise<void>
+  login: (identifier: string, password: string) => Promise<void>
+  register: (data: { name: string; email?: string; password: string; phone: string; villageId?: string }) => Promise<void>
   logout: () => void
   loading: boolean
 }
@@ -39,8 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const login = async (email: string, password: string) => {
-    const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) })
+  const login = async (identifier: string, password: string) => {
+    const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ identifier, password }) })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error || 'Login failed')
     localStorage.setItem('token', data.token)
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user)
   }
 
-  const register = async (data: { name: string; email: string; password: string; phone?: string; villageId?: string }) => {
+  const register = async (data: { name: string; email?: string; password: string; phone: string; villageId?: string }) => {
     const res = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
     const result = await res.json()
     if (!res.ok) throw new Error(result.error || 'Registration failed')

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
@@ -21,7 +21,7 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      await login(email, password)
+      await login(identifier, password)
       router.push('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login gagal')
@@ -46,7 +46,7 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="petani@desa.id" required />
+          <Input label="Email atau No. HP" type="text" value={identifier} onChange={e => setIdentifier(e.target.value)} placeholder="08xxxxxxxxxx atau email" required />
           <div className="relative">
             <Input label="Password" type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
             <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-8 text-gray-400">
@@ -58,11 +58,6 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center text-sm text-gray-500">
           <p>Belum punya akun? <Link href="/register" className="text-green-600 font-medium hover:underline">Daftar di sini</Link></p>
-        </div>
-
-        <div className="mt-4 text-center text-sm text-gray-500">
-          <p>Akun demo:</p>
-          <p className="text-xs mt-1 text-gray-400">superadmin@hydro.id / password123</p>
         </div>
       </div>
     </div>

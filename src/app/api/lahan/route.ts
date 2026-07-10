@@ -38,8 +38,18 @@ export async function POST(request: NextRequest) {
   const user = getUserFromRequest(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await request.json()
-  const { area, blockLocation, soilType, ownershipStatus, commodity, description, villageId, ownerId } = body
+  const { area, blockLocation, soilType, ownershipStatus, commodity, description, ownerId } = body
+
+  // Resolve village with scope enforcement: farmers & village admins are pinned to their own village.
+  let villageId: string | null = body.villageId || null
+  if (user.role === 'FARMER') {
+    const u = await prisma.user.findUnique({ where: { id: user.userId }, select: { villageId: true } })
+    villageId = u?.villageId ?? null
+  } else if (user.role === 'VILLAGE_ADMIN') {
+    villageId = await getAdminVillageId(user.userId)
+  }
   if (!area || !villageId) return NextResponse.json({ error: 'Luas lahan dan desa wajib diisi' }, { status: 400 })
+
   const resolvedOwnerId = user.role === 'FARMER' ? user.userId : (ownerId || user.userId)
   const lahan = await prisma.lahan.create({
     data: {

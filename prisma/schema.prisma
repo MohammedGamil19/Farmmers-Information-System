@@ -75,6 +75,7 @@ model User {
   rw           String?
   memberStatus MemberStatus @default(ACTIVE)
   isActive     Boolean      @default(true)
+  lastLoginAt  DateTime?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 

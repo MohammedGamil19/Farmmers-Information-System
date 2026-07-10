@@ -49,8 +49,16 @@ export async function POST(request: NextRequest) {
   const user = getUserFromRequest(request)
   if (!user || user.role === 'FARMER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const body = await request.json()
-  const { name, email, password, phone, nik, address, rt, rw, villageId, memberStatus } = body
+  const { name, email, password, phone, nik, address, rt, rw, memberStatus } = body
   if (!name || !email || !password) return NextResponse.json({ error: 'Nama, email, dan password wajib diisi' }, { status: 400 })
+
+  // Village admins can only create members in their OWN village; the client value is ignored.
+  let villageId: string | null = body.villageId || null
+  if (user.role === 'VILLAGE_ADMIN') {
+    villageId = await getAdminVillageId(user.userId)
+    if (!villageId) return NextResponse.json({ error: 'Admin belum terkait dengan desa manapun' }, { status: 400 })
+  }
+
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) return NextResponse.json({ error: 'Email sudah digunakan' }, { status: 400 })
   if (nik) {
