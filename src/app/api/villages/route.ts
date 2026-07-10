@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const user = getUserFromRequest(request)
-  if (!user || user.role !== 'SUPER_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!user || user.role === 'FARMER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const body = await request.json()
   const village = await prisma.village.create({ data: { name: body.name, district: body.district, province: body.province, description: body.description } })
   return NextResponse.json({ village }, { status: 201 })

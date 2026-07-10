@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 import { logActivity } from '@/lib/activity'
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -16,15 +15,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const existing = await prisma.panen.findUnique({ where: { id } })
   if (!existing || !existing.isActive) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  // Ownership / village checks against the existing record
+  // Ownership check against the existing record (admins are global)
   if (user.role === 'FARMER' && existing.petaniId !== user.userId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-  if (user.role === 'VILLAGE_ADMIN') {
-    const villageId = await getAdminVillageId(user.userId)
-    if (villageId && existing.villageId !== villageId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
   }
 
   // If the garden changed, re-derive plant type / village / farmer from the new garden
@@ -35,12 +28,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       include: { plantType: { select: { id: true, name: true } } },
     })
     if (!farm || !farm.isActive) return NextResponse.json({ error: 'Kebun tidak ditemukan' }, { status: 404 })
-    if (user.role === 'VILLAGE_ADMIN') {
-      const villageId = await getAdminVillageId(user.userId)
-      if (villageId && farm.villageId !== villageId) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-      }
-    }
     derived.farmId = farm.id
     derived.plantTypeId = farm.plantType.id
     derived.komoditas = farm.plantType.name
@@ -84,12 +71,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
   if (user.role === 'FARMER' && existing.petaniId !== user.userId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-  if (user.role === 'VILLAGE_ADMIN') {
-    const villageId = await getAdminVillageId(user.userId)
-    if (villageId && existing.villageId !== villageId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
   }
 
   await prisma.panen.update({ where: { id }, data: { isActive: false } })

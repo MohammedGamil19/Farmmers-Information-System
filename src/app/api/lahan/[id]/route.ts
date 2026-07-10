@@ -2,17 +2,12 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 import { logActivity } from '@/lib/activity'
 
 async function canAccess(lahanId: string, user: { userId: string; role: string }) {
   const lahan = await prisma.lahan.findUnique({ where: { id: lahanId } })
   if (!lahan) return null
-  if (user.role === 'SUPER_ADMIN') return lahan
-  if (user.role === 'VILLAGE_ADMIN') {
-    const vid = await getAdminVillageId(user.userId)
-    return vid && lahan.villageId === vid ? lahan : null
-  }
+  if (user.role !== 'FARMER') return lahan // admin: global
   return lahan.ownerId === user.userId ? lahan : null
 }
 

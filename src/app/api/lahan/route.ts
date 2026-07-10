@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 import { logActivity } from '@/lib/activity'
 
 export async function GET(request: NextRequest) {
@@ -16,10 +15,8 @@ export async function GET(request: NextRequest) {
 
   if (user.role === 'FARMER') {
     where.ownerId = user.userId
-  } else if (user.role === 'VILLAGE_ADMIN') {
-    const vid = await getAdminVillageId(user.userId)
-    if (vid) where.villageId = vid
   }
+  // Admin: global — sees all land parcels
   if (ownerId && user.role !== 'FARMER') where.ownerId = ownerId
 
   const lahans = await prisma.lahan.findMany({
@@ -41,13 +38,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const { area, blockLocation, soilType, ownershipStatus, commodity, description, ownerId } = body
 
-  // Resolve village with scope enforcement: farmers & village admins are pinned to their own village.
+  // Farmers are pinned to their own village; admins pick the village (from the form).
   let villageId: string | null = body.villageId || null
   if (user.role === 'FARMER') {
     const u = await prisma.user.findUnique({ where: { id: user.userId }, select: { villageId: true } })
     villageId = u?.villageId ?? null
-  } else if (user.role === 'VILLAGE_ADMIN') {
-    villageId = await getAdminVillageId(user.userId)
   }
   if (!area || !villageId) return NextResponse.json({ error: 'Luas lahan dan desa wajib diisi' }, { status: 400 })
 

@@ -7,29 +7,29 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Leaf, BarChart3, FileText,
   Bell, User, Settings, LogOut, Menu, X, MapPin, Users, Sprout, Globe,
-  UserCheck, Layers, Megaphone, CalendarDays, Wheat, History
+  Layers, Megaphone, CalendarDays, Wheat, History
 } from 'lucide-react'
 
+// scope: 'all' = both roles, 'admin' = admins only, 'farmer' = farmers only
 const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  // GAPOKTAN — primary focus: harvest production data documentation
-  { href: '/panen', icon: Wheat, label: 'Data Panen', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/anggota', icon: UserCheck, label: 'Data Anggota', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/lahan', icon: Layers, label: 'Data Lahan', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/pengumuman', icon: Megaphone, label: 'Pengumuman', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/kalender', icon: CalendarDays, label: 'Kalender Kegiatan', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/analytics', icon: BarChart3, label: 'Analitik', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/reports', icon: FileText, label: 'Laporan', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
-  { href: '/farms', icon: Leaf, label: 'Kebun Saya', roles: ['FARMER'] },
-  { href: '/farms', icon: Leaf, label: 'Semua Kebun', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
-  { href: '/tanaman', icon: Sprout, label: 'Jenis Tanaman', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  // Admin
-  { href: '/notifications', icon: Bell, label: 'Notifikasi', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
-  { href: '/aktivitas', icon: History, label: 'Log Aktivitas', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
-  { href: '/admin/users', icon: Users, label: 'Pengguna', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
-  { href: '/admin/villages', icon: MapPin, label: 'Desa', roles: ['SUPER_ADMIN'] },
-  { href: '/admin/cms', icon: Globe, label: 'Halaman Utama', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
-  { href: '/admin/settings', icon: Settings, label: 'Pengaturan', roles: ['SUPER_ADMIN'] },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', scope: 'all' },
+  // Farmer's core task: record harvest for their own gardens
+  { href: '/panen', icon: Wheat, label: 'Data Panen', scope: 'all' },
+  { href: '/farms', icon: Leaf, label: 'Kebun Saya', scope: 'farmer' },
+  { href: '/pengumuman', icon: Megaphone, label: 'Pengumuman', scope: 'all' },
+  { href: '/notifications', icon: Bell, label: 'Notifikasi', scope: 'all' },
+  // Admin-only management sections
+  { href: '/farms', icon: Leaf, label: 'Semua Kebun', scope: 'admin' },
+  { href: '/tanaman', icon: Sprout, label: 'Jenis Tanaman', scope: 'admin' },
+  { href: '/lahan', icon: Layers, label: 'Data Lahan', scope: 'admin' },
+  { href: '/kalender', icon: CalendarDays, label: 'Kalender Kegiatan', scope: 'admin' },
+  { href: '/analytics', icon: BarChart3, label: 'Analitik', scope: 'admin' },
+  { href: '/reports', icon: FileText, label: 'Laporan', scope: 'admin' },
+  { href: '/aktivitas', icon: History, label: 'Log Aktivitas', scope: 'admin' },
+  { href: '/admin/users', icon: Users, label: 'Manajemen Pengguna', scope: 'admin' },
+  { href: '/admin/villages', icon: MapPin, label: 'Desa', scope: 'admin' },
+  { href: '/admin/cms', icon: Globe, label: 'Halaman Utama', scope: 'admin' },
+  { href: '/admin/settings', icon: Settings, label: 'Pengaturan', scope: 'admin' },
 ]
 
 export function Sidebar() {
@@ -37,7 +37,12 @@ export function Sidebar() {
   const pathname = usePathname()
   const { user, logout } = useAuth()
 
-  const items = navItems.filter(i => user && i.roles.includes(user.role))
+  const isAdmin = !!user && user.role !== 'FARMER'
+  const items = navItems.filter(i => {
+    if (i.scope === 'admin') return isAdmin
+    if (i.scope === 'farmer') return !isAdmin
+    return true
+  })
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full overflow-hidden">
@@ -71,7 +76,7 @@ export function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-white text-sm font-medium truncate">{user?.name}</p>
-            <p className="text-green-300 text-xs truncate">{user?.role === 'SUPER_ADMIN' ? 'Super Admin' : user?.role === 'VILLAGE_ADMIN' ? 'Admin Desa' : 'Petani'}</p>
+            <p className="text-green-300 text-xs truncate">{isAdmin ? 'Admin' : 'Petani'}</p>
           </div>
         </div>
         <Link href="/profile" className="flex items-center gap-3 px-3 py-2 text-green-100 hover:text-white hover:bg-white/10 rounded-lg text-sm">

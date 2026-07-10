@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 import { logActivity } from '@/lib/activity'
 
 export async function GET(request: NextRequest) {
@@ -17,10 +16,8 @@ export async function GET(request: NextRequest) {
   const where: Record<string, unknown> = { isActive: true }
   if (user.role === 'FARMER') {
     where.ownerId = user.userId
-  } else if (user.role === 'VILLAGE_ADMIN') {
-    const vid = await getAdminVillageId(user.userId)
-    if (vid) where.villageId = vid
   }
+  // Admin: global — may optionally filter by village via query param
   if (villageId) where.villageId = villageId
   if (status) where.status = status
   if (ownerId && user.role !== 'FARMER') where.ownerId = ownerId

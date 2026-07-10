@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = getUserFromRequest(request)
-  if (!user || user.role !== 'SUPER_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!user || user.role === 'FARMER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
   const target = await prisma.user.findUnique({ where: { id }, select: { name: true, villageId: true } })
   await prisma.user.update({ where: { id }, data: { isActive: false, memberStatus: 'INACTIVE' } })

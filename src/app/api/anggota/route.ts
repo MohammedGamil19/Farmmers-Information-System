@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 import { hashPassword } from '@/lib/auth'
 import { logActivity } from '@/lib/activity'
 
@@ -16,10 +15,8 @@ export async function GET(request: NextRequest) {
 
   const where: Record<string, unknown> = { role: 'FARMER' }
 
-  if (user.role === 'VILLAGE_ADMIN') {
-    const vid = await getAdminVillageId(user.userId)
-    if (vid) where.villageId = vid
-  } else if (user.role === 'FARMER') {
+  // Admin: sees all farmers. Farmer: only fellow farmers in their own village.
+  if (user.role === 'FARMER') {
     const u = await prisma.user.findUnique({ where: { id: user.userId }, select: { villageId: true } })
     if (u?.villageId) where.villageId = u.villageId
   }
@@ -53,12 +50,8 @@ export async function POST(request: NextRequest) {
   const { name, email, password, phone, nik, address, rt, rw, memberStatus } = body
   if (!name || !email || !password) return NextResponse.json({ error: 'Nama, email, dan password wajib diisi' }, { status: 400 })
 
-  // Village admins can only create members in their OWN village; the client value is ignored.
-  let villageId: string | null = body.villageId || null
-  if (user.role === 'VILLAGE_ADMIN') {
-    villageId = await getAdminVillageId(user.userId)
-    if (!villageId) return NextResponse.json({ error: 'Admin belum terkait dengan desa manapun' }, { status: 400 })
-  }
+  // Admin picks the village from the form
+  const villageId: string | null = body.villageId || null
 
   const existing = await prisma.user.findUnique({ where: { email } })
   if (existing) return NextResponse.json({ error: 'Email sudah digunakan' }, { status: 400 })

@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 
 export async function GET(request: NextRequest) {
   const user = getUserFromRequest(request)
@@ -12,10 +11,8 @@ export async function GET(request: NextRequest) {
   const to = searchParams.get('to')
   const limit = parseInt(searchParams.get('limit') || '50')
   const where: Record<string, unknown> = {}
-  if (user.role === 'VILLAGE_ADMIN') {
-    const vid = await getAdminVillageId(user.userId)
-    if (vid) where.villageId = vid
-  } else if (user.role === 'FARMER') {
+  // Farmers only see their own village's events; admins see all
+  if (user.role === 'FARMER') {
     const u = await prisma.user.findUnique({ where: { id: user.userId }, select: { villageId: true } })
     if (u?.villageId) where.villageId = u.villageId
   }

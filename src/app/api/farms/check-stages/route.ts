@@ -29,10 +29,8 @@ export async function POST(request: NextRequest) {
   const where: Record<string, unknown> = { isActive: true }
   if (user.role === 'FARMER') {
     where.ownerId = user.userId
-  } else if (user.role === 'VILLAGE_ADMIN') {
-    const admin = await prisma.user.findUnique({ where: { id: user.userId } })
-    if (admin?.villageId) where.villageId = admin.villageId
   }
+  // Admin: global — checks all gardens
 
   const farms = await prisma.farm.findMany({
     where,

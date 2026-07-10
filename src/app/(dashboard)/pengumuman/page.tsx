@@ -128,12 +128,8 @@ export default function PengumumanPage() {
             <Select label="Status" value={form.isPublished} onChange={e => setForm({ ...form, isPublished: e.target.value })}
               options={[{ value: 'true', label: 'Terbitkan' }, { value: 'false', label: 'Simpan sebagai Draft' }]} />
           </div>
-          {user?.role === 'SUPER_ADMIN' ? (
-            <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
-              options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
-          ) : (
-            <Input label="Desa" value={user?.village?.name || '-'} disabled />
-          )}
+          <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
+            options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setShowModal(false)} className="flex-1">Batal</Button>
             <Button type="submit" loading={saving} className="flex-1">Simpan</Button>

@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 
 export async function GET(request: NextRequest) {
   const user = getUserFromRequest(request)
@@ -30,15 +29,8 @@ export async function GET(request: NextRequest) {
     panenWhere.petaniId = user.userId
     const u = await prisma.user.findUnique({ where: { id: user.userId }, select: { villageId: true } })
     villageId = u?.villageId ?? null
-  } else if (user.role === 'VILLAGE_ADMIN') {
-    villageId = await getAdminVillageId(user.userId)
-    if (villageId) {
-      farmWhere.villageId = villageId
-      memberWhere.villageId = villageId
-      lahanWhere.villageId = villageId
-      panenWhere.villageId = villageId
-    }
   }
+  // Admin: global — no village scoping applied
 
   if (villageId) {
     annWhere.villageId = villageId
@@ -52,7 +44,7 @@ export async function GET(request: NextRequest) {
   ] = await Promise.all([
     prisma.farm.count({ where: farmWhere }),
     prisma.farm.count({ where: { ...farmWhere, status: { in: ['ACTIVE', 'GROWING'] } } }),
-    user.role === 'SUPER_ADMIN'
+    user.role !== 'FARMER'
       ? prisma.user.count({ where: { role: 'FARMER', isActive: true } })
       : Promise.resolve(null),
     prisma.farm.count({ where: { ...farmWhere, status: 'READY_FOR_HARVEST' } }),

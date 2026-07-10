@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 
 export async function GET(request: NextRequest) {
   const user = getUserFromRequest(request)
@@ -14,11 +13,10 @@ export async function GET(request: NextRequest) {
   const entity = searchParams.get('entity')
 
   const where: Record<string, unknown> = {}
-  if (user.role === 'VILLAGE_ADMIN') {
-    const villageId = await getAdminVillageId(user.userId)
-    where.villageId = villageId ?? '__none__'
-  }
+  // Admin sees all activity across every village
   if (entity) where.entity = entity
+  const userId = searchParams.get('userId')
+  if (userId) where.userId = userId
 
   const logs = await prisma.activityLog.findMany({
     where,

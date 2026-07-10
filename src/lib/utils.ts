@@ -43,9 +43,11 @@ export function getFarmStatusLabel(status: string): string {
 
 export function getRoleLabel(role: string): string {
   const labels: Record<string, string> = {
-    SUPER_ADMIN: 'Super Admin',
-    VILLAGE_ADMIN: 'Admin Desa',
+    ADMIN: 'Admin',
     FARMER: 'Petani',
+    // legacy roles (pre 2-role migration)
+    SUPER_ADMIN: 'Admin',
+    VILLAGE_ADMIN: 'Admin',
   }
   return labels[role] || role
 }

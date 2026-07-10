@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 import { logActivity } from '@/lib/activity'
 
 export async function GET(request: NextRequest) {
@@ -13,10 +12,8 @@ export async function GET(request: NextRequest) {
 
   if (user.role === 'FARMER') {
     where.petaniId = user.userId
-  } else if (user.role === 'VILLAGE_ADMIN') {
-    const villageId = await getAdminVillageId(user.userId)
-    if (villageId) where.villageId = villageId
   }
+  // Admin: global — sees all harvest records
 
   const panens = await prisma.panen.findMany({
     where,
@@ -55,12 +52,7 @@ export async function POST(request: NextRequest) {
   if (user.role === 'FARMER' && farm.ownerId !== user.userId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
-  if (user.role === 'VILLAGE_ADMIN') {
-    const villageId = await getAdminVillageId(user.userId)
-    if (villageId && farm.villageId !== villageId) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-  }
+  // Admin: may record harvest for any garden
 
   const panen = await prisma.panen.create({
     data: {

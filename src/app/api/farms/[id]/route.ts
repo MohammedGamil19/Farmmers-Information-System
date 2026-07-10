@@ -2,21 +2,13 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 
 // Returns the farm if the requesting user is allowed to access it, otherwise
-// null. SUPER_ADMIN can access everything, VILLAGE_ADMIN only farms in their
-// own village, FARMER only farms they own.
+// null. ADMIN can access everything; FARMER only farms they own.
 async function getAuthorizedFarm(id: string, user: { userId: string; role: string }) {
   const farm = await prisma.farm.findUnique({ where: { id } })
   if (!farm) return null
-  if (user.role === 'SUPER_ADMIN') return farm
-  if (user.role === 'VILLAGE_ADMIN') {
-    const villageId = await getAdminVillageId(user.userId)
-    if (villageId && farm.villageId === villageId) return farm
-    return null
-  }
-  // FARMER
+  if (user.role !== 'FARMER') return farm
   if (farm.ownerId === user.userId) return farm
   return null
 }
@@ -87,7 +79,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = getUserFromRequest(request)
-  if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'VILLAGE_ADMIN')) {
+  if (!user || user.role === 'FARMER') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
   const { id } = await params

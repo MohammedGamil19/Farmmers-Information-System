@@ -184,12 +184,8 @@ export default function LahanPage() {
               options={[{ value: 'OWNED', label: 'Milik Sendiri' }, { value: 'RENTED', label: 'Sewa' }, { value: 'MORTGAGED', label: 'Gadai' }]} />
           </div>
           <Input label="Komoditas yang Ditanam" value={form.commodity} onChange={e => setForm({ ...form, commodity: e.target.value })} placeholder="Padi, Jagung, Sayuran, dll" />
-          {user?.role === 'SUPER_ADMIN' ? (
-            <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
-              options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
-          ) : (
-            <Input label="Desa" value={user?.village?.name || '-'} disabled />
-          )}
+          <Select label="Desa *" value={form.villageId} onChange={e => setForm({ ...form, villageId: e.target.value })}
+            options={[{ value: '', label: '-- Pilih Desa --' }, ...villages.map(v => ({ value: v.id, label: v.name }))]} />
           {user?.role !== 'FARMER' && farmers.length > 0 && (
             <Select label="Petani Pemilik" value={form.ownerId} onChange={e => setForm({ ...form, ownerId: e.target.value })}
               options={[{ value: '', label: '-- Pilih Petani --' }, ...farmers.map(f => ({ value: f.id, label: f.name }))]} />

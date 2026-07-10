@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 
 export async function GET(request: NextRequest) {
   const user = getUserFromRequest(request)
@@ -20,10 +19,8 @@ export async function GET(request: NextRequest) {
 
   if (user.role === 'FARMER') {
     where.petaniId = user.userId
-  } else if (user.role === 'VILLAGE_ADMIN') {
-    const villageId = await getAdminVillageId(user.userId)
-    if (villageId) where.villageId = villageId
   }
+  // Admin: global — sees all villages
 
   const panens = await prisma.panen.findMany({
     where,

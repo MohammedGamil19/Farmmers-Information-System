@@ -25,7 +25,8 @@ const ACTION_META: Record<string, { label: string; variant: 'success' | 'info' |
 }
 
 const ROLE_LABELS: Record<string, string> = {
-  SUPER_ADMIN: 'Super Admin', VILLAGE_ADMIN: 'Admin Desa', FARMER: 'Petani',
+  ADMIN: 'Admin', FARMER: 'Petani',
+  SUPER_ADMIN: 'Admin', VILLAGE_ADMIN: 'Admin',
 }
 
 export default function AktivitasPage() {
@@ -34,19 +35,33 @@ export default function AktivitasPage() {
   const [logs, setLogs] = useState<Log[]>([])
   const [loading, setLoading] = useState(true)
   const [entity, setEntity] = useState('')
+  const [userId, setUserId] = useState('')
+  const [userName, setUserName] = useState('')
 
   // Guard: only admins may view the activity log
   useEffect(() => {
     if (!authLoading && user && user.role === 'FARMER') router.replace('/dashboard')
   }, [authLoading, user, router])
 
+  // Optional deep-link: /aktivitas?userId=<id> to see one user's activity
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    setUserId(p.get('userId') || '')
+  }, [])
+
   const load = () => {
     setLoading(true)
-    api.get(`/api/activity${entity ? `?entity=${entity}` : ''}`)
-      .then(d => setLogs(d.logs || []))
+    const params = new URLSearchParams()
+    if (entity) params.set('entity', entity)
+    if (userId) params.set('userId', userId)
+    api.get(`/api/activity?${params}`)
+      .then(d => {
+        setLogs(d.logs || [])
+        if (userId && d.logs?.[0]) setUserName(d.logs[0].user.name)
+      })
       .finally(() => setLoading(false))
   }
-  useEffect(() => { if (user && user.role !== 'FARMER') load() }, [entity, user]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (user && user.role !== 'FARMER') load() }, [entity, userId, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (user?.role === 'FARMER') return null
 
@@ -56,6 +71,13 @@ export default function AktivitasPage() {
         <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2"><History size={22} /> Log Aktivitas</h1>
         <p className="text-gray-500 text-sm mt-1">Catatan siapa menambah, mengubah, atau menghapus data — untuk transparansi GAPOKTAN</p>
       </div>
+
+      {userId && (
+        <div className="mb-4 flex items-center gap-2 text-sm bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+          <span className="text-gray-700">Menampilkan aktivitas untuk: <strong>{userName || 'pengguna terpilih'}</strong></span>
+          <button onClick={() => { setUserId(''); setUserName(''); router.replace('/aktivitas') }} className="text-green-700 underline ml-auto">Tampilkan semua</button>
+        </div>
+      )}
 
       <div className="mb-4 w-full sm:w-56">
         <Select label="" value={entity} onChange={e => setEntity(e.target.value)}

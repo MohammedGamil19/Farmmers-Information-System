@@ -115,7 +115,7 @@ export default function TanamanPage() {
     }
   }
 
-  const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'VILLAGE_ADMIN'
+  const isAdmin = !!user && user.role !== 'FARMER'
 
   // Returns true if the current user can edit/delete this specific plant
   const canModify = (p: PlantType) =>

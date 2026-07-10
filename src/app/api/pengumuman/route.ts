@@ -2,19 +2,15 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
-import { getAdminVillageId } from '@/lib/get-village-id'
 
 export async function GET(request: NextRequest) {
   const user = getUserFromRequest(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { searchParams } = new URL(request.url)
   const limit = parseInt(searchParams.get('limit') || '20')
-  // Farmers and public only see published; admins see all (including drafts)
+  // Farmers only see published announcements from their own village; admins see all (incl. drafts)
   const where: Record<string, unknown> = user.role === 'FARMER' ? { isPublished: true } : {}
-  if (user.role === 'VILLAGE_ADMIN') {
-    const vid = await getAdminVillageId(user.userId)
-    if (vid) where.villageId = vid
-  } else if (user.role === 'FARMER') {
+  if (user.role === 'FARMER') {
     const u = await prisma.user.findUnique({ where: { id: user.userId }, select: { villageId: true } })
     if (u?.villageId) where.villageId = u.villageId
   }
