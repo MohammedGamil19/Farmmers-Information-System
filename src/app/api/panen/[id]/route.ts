@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { getAdminVillageId } from '@/lib/get-village-id'
+import { logActivity } from '@/lib/activity'
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = getUserFromRequest(request)
@@ -65,6 +66,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     },
   })
 
+  await logActivity({
+    userId: user.userId, action: 'UPDATE', entity: 'Panen', villageId: panen.village.id,
+    detail: `Memperbarui panen ${panen.jumlahKg} kg ${panen.plantType.name} di kebun ${panen.farm.name}`,
+  })
+
   return NextResponse.json(panen)
 }
 
@@ -87,5 +93,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   }
 
   await prisma.panen.update({ where: { id }, data: { isActive: false } })
+  await logActivity({
+    userId: user.userId, action: 'DELETE', entity: 'Panen', villageId: existing.villageId,
+    detail: `Menghapus panen ${existing.jumlahKg} kg ${existing.komoditas}`,
+  })
   return NextResponse.json({ success: true })
 }

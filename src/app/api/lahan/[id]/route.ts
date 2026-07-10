@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { getAdminVillageId } from '@/lib/get-village-id'
+import { logActivity } from '@/lib/activity'
 
 async function canAccess(lahanId: string, user: { userId: string; role: string }) {
   const lahan = await prisma.lahan.findUnique({ where: { id: lahanId } })
@@ -44,7 +45,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const user = getUserFromRequest(request)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
-  if (!await canAccess(id, user)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  const lahan = await canAccess(id, user)
+  if (!lahan) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   await prisma.lahan.update({ where: { id }, data: { isActive: false } })
+  await logActivity({
+    userId: user.userId, action: 'DELETE', entity: 'Lahan', villageId: lahan.villageId,
+    detail: `Menghapus lahan ${lahan.area} ha`,
+  })
   return NextResponse.json({ message: 'Deleted' })
 }

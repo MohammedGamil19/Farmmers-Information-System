@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { getAdminVillageId } from '@/lib/get-village-id'
+import { logActivity } from '@/lib/activity'
 
 export async function GET(request: NextRequest) {
   const user = getUserFromRequest(request)
@@ -56,6 +57,10 @@ export async function POST(request: NextRequest) {
     const farm = await prisma.farm.create({
       data: { name, description, location, area: area ? parseFloat(area) : null, plantTypeId, villageId, ownerId, plantingDate: new Date(plantingDate), estimatedHarvest: estimatedHarvest ? new Date(estimatedHarvest) : null },
       include: { owner: true, village: true, plantType: true },
+    })
+    await logActivity({
+      userId: user.userId, action: 'CREATE', entity: 'Kebun', villageId: farm.villageId,
+      detail: `Menambah kebun ${farm.name} (${farm.plantType.name})`,
     })
     return NextResponse.json({ farm }, { status: 201 })
   } catch (err) {

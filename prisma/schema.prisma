@@ -89,6 +89,7 @@ model User {
   announcements  Announcement[]
   calendarEvents CalendarEvent[]
   panens         Panen[]
+  activityLogs   ActivityLog[]
 
   @@map("users")
 }
@@ -250,6 +251,21 @@ model Panen {
   village     Village   @relation(fields: [villageId], references: [id])
 
   @@map("panens")
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String   // CREATE | UPDATE | DELETE
+  entity    String   // Panen | Anggota | Lahan | Kebun | Pengguna
+  detail    String   // human-readable Indonesian description
+  villageId String?
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([villageId, createdAt])
+  @@map("activity_logs")
 }
 
 model SystemSetting {

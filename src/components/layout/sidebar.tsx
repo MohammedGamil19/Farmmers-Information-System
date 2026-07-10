@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Leaf, BarChart3, FileText,
   Bell, User, Settings, LogOut, Menu, X, MapPin, Users, Sprout, Globe,
-  UserCheck, Layers, Megaphone, CalendarDays, Wheat
+  UserCheck, Layers, Megaphone, CalendarDays, Wheat, History
 } from 'lucide-react'
 
 const navItems = [
@@ -25,6 +25,7 @@ const navItems = [
   { href: '/tanaman', icon: Sprout, label: 'Jenis Tanaman', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
   // Admin
   { href: '/notifications', icon: Bell, label: 'Notifikasi', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN', 'FARMER'] },
+  { href: '/aktivitas', icon: History, label: 'Log Aktivitas', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
   { href: '/admin/users', icon: Users, label: 'Pengguna', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },
   { href: '/admin/villages', icon: MapPin, label: 'Desa', roles: ['SUPER_ADMIN'] },
   { href: '/admin/cms', icon: Globe, label: 'Halaman Utama', roles: ['SUPER_ADMIN', 'VILLAGE_ADMIN'] },

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { getAdminVillageId } from '@/lib/get-village-id'
 import { hashPassword } from '@/lib/auth'
+import { logActivity } from '@/lib/activity'
 
 export async function GET(request: NextRequest) {
   const user = getUserFromRequest(request)
@@ -79,6 +80,10 @@ export async function POST(request: NextRequest) {
       address: true, rt: true, rw: true, memberStatus: true,
       village: { select: { id: true, name: true } },
     },
+  })
+  await logActivity({
+    userId: user.userId, action: 'CREATE', entity: 'Anggota', villageId,
+    detail: `Menambah anggota ${member.name}`,
   })
   return NextResponse.json({ member }, { status: 201 })
 }

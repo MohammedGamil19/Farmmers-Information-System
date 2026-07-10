@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest, hashPassword } from '@/lib/auth'
+import { logActivity } from '@/lib/activity'
 
 export async function GET(request: NextRequest) {
   const user = getUserFromRequest(request)
@@ -30,5 +31,6 @@ export async function POST(request: NextRequest) {
   if (existing) return NextResponse.json({ error: 'Email sudah digunakan' }, { status: 400 })
   const hashed = await hashPassword(password)
   const newUser = await prisma.user.create({ data: { name, email, password: hashed, role: role || 'FARMER', phone, villageId }, include: { village: true }, omit: { password: true } })
+  await logActivity({ userId: user.userId, action: 'CREATE', entity: 'Pengguna', villageId: newUser.villageId, detail: `Menambah pengguna ${newUser.name}` })
   return NextResponse.json({ user: newUser }, { status: 201 })
 }
