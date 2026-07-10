@@ -274,7 +274,16 @@ export default function PanenPage() {
       {/* Mobile Cards */}
       <div className="grid gap-3 sm:hidden">
         {filtered.length === 0 && (
-          <p className="text-center text-gray-400 py-8">Belum ada data panen</p>
+          panens.length === 0 ? (
+            <div className="text-center py-10 px-4 bg-white rounded-xl border border-dashed border-gray-200">
+              <Wheat size={40} className="mx-auto mb-3 text-green-300" />
+              <p className="font-medium text-gray-700">Belum ada hasil panen yang dicatat</p>
+              <p className="text-sm text-gray-400 mt-1 mb-4">Ketuk tombol di bawah untuk mencatat panen pertama Anda.</p>
+              <Button onClick={openNew} disabled={farms.length === 0} className="gap-2"><Plus size={16} /> Tambah Panen</Button>
+            </div>
+          ) : (
+            <p className="text-center text-gray-400 py-8">Tidak ada panen yang cocok dengan pencarian</p>
+          )
         )}
         {filtered.map(p => (
           <Card key={p.id}>
@@ -315,7 +324,16 @@ export default function PanenPage() {
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <p className="text-center text-gray-400 py-8">Belum ada data panen</p>
+            panens.length === 0 ? (
+              <div className="text-center py-12">
+                <Wheat size={44} className="mx-auto mb-3 text-green-300" />
+                <p className="font-medium text-gray-700">Belum ada hasil panen yang dicatat</p>
+                <p className="text-sm text-gray-400 mt-1 mb-4">Mulai dokumentasikan produksi panen kebun Anda.</p>
+                <Button onClick={openNew} disabled={farms.length === 0} className="gap-2"><Plus size={16} /> Tambah Panen</Button>
+              </div>
+            ) : (
+              <p className="text-center text-gray-400 py-8">Tidak ada panen yang cocok dengan pencarian</p>
+            )
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -383,7 +401,7 @@ export default function PanenPage() {
                 <div className="w-full">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Kebun *</label>
                   <select
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-3 text-base text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                     value={form.farmId}
                     onChange={e => setForm(f => ({ ...f, farmId: e.target.value }))}
                   >
@@ -392,6 +410,7 @@ export default function PanenPage() {
                       <option key={f.id} value={f.id}>{f.name} — {f.plantType.name}</option>
                     ))}
                   </select>
+                  <p className="text-xs text-gray-400 mt-1">Pilih kebun tempat hasil panen ini berasal. Jenis tanaman akan terisi otomatis.</p>
                 </div>
 
                 {/* Auto plant type (read-only) */}
@@ -404,35 +423,42 @@ export default function PanenPage() {
                 <Input
                   label="Tanggal Panen *"
                   type="date"
+                  className="py-3 text-base"
                   value={form.tanggalPanen}
                   onChange={e => setForm(f => ({ ...f, tanggalPanen: e.target.value }))}
                 />
-                <Input
-                  label="Jumlah Hasil Panen (kg) *"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  placeholder="0"
-                  value={form.jumlahKg}
-                  onChange={e => setForm(f => ({ ...f, jumlahKg: e.target.value }))}
-                />
+                <div>
+                  <Input
+                    label="Jumlah Hasil Panen (kg) *"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    placeholder="Contoh: 25"
+                    className="py-3 text-base"
+                    value={form.jumlahKg}
+                    onChange={e => setForm(f => ({ ...f, jumlahKg: e.target.value }))}
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Berat total hasil panen dalam kilogram (kg).</p>
+                </div>
                 <Input
                   label="Harga Jual per kg (Rp) — opsional"
                   type="number"
                   min="0"
-                  placeholder="0"
+                  placeholder="Boleh dikosongkan"
+                  className="py-3 text-base"
                   value={form.hargaJual}
                   onChange={e => setForm(f => ({ ...f, hargaJual: e.target.value }))}
                 />
                 <div className="w-full">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Kondisi Panen</label>
                   <select
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-3 text-base text-gray-900 focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
                     value={form.kondisi}
                     onChange={e => setForm(f => ({ ...f, kondisi: e.target.value }))}
                   >
                     {KONDISI_OPTIONS.map(k => <option key={k} value={k}>{k}</option>)}
                   </select>
+                  <p className="text-xs text-gray-400 mt-1">Kualitas hasil panen: Baik, Sedang, atau Kurang.</p>
                 </div>
                 <div className="w-full">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
@@ -447,10 +473,10 @@ export default function PanenPage() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <Button variant="outline" className="flex-1" onClick={() => setShowModal(false)} disabled={saving}>
+                <Button variant="outline" size="lg" className="flex-1" onClick={() => setShowModal(false)} disabled={saving}>
                   Batal
                 </Button>
-                <Button className="flex-1" onClick={save} disabled={saving || !form.tanggalPanen || !form.farmId || !form.jumlahKg}>
+                <Button size="lg" className="flex-1" onClick={save} disabled={saving || !form.tanggalPanen || !form.farmId || !form.jumlahKg}>
                   {saving ? 'Menyimpan...' : editId ? 'Simpan Perubahan' : 'Tambah Panen'}
                 </Button>
               </div>

@@ -443,7 +443,7 @@ export default function CmsPage() {
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><Info size={18} />Seksi Tentang</CardTitle></CardHeader>
           <CardContent>
-            <SectionHeader title="Tentang Program / Desa" desc="Ceritakan tentang program hidroponik dan desa Anda. Bisa dinonaktifkan jika tidak diperlukan." />
+            <SectionHeader title="Tentang Program / Desa" desc="Ceritakan tentang program pertanian dan desa Anda. Bisa dinonaktifkan jika tidak diperlukan." />
             <div className="space-y-5 max-w-2xl">
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                 <div>
@@ -457,7 +457,7 @@ export default function CmsPage() {
               <div>
                 <FieldLabel>Judul Seksi</FieldLabel>
                 <Input value={about.title} onChange={e => setAbout(a => ({ ...a, title: e.target.value }))}
-                  placeholder="Tentang Program Hidroponik Desa" disabled={!about.enabled} />
+                  placeholder="Tentang Program Pertanian Desa" disabled={!about.enabled} />
               </div>
               <div>
                 <FieldLabel>Isi Teks</FieldLabel>
@@ -812,7 +812,7 @@ export default function CmsPage() {
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><BarChart3 size={18} />Statistik Live</CardTitle></CardHeader>
           <CardContent>
-            <SectionHeader title="Tampilkan Statistik Real-time" desc="Angka kebun aktif, petani terdaftar, desa binaan, dan total catatan monitoring diambil langsung dari database." />
+            <SectionHeader title="Tampilkan Statistik Real-time" desc="Angka kebun aktif, petani terdaftar, desa binaan, dan total catatan panen diambil langsung dari database." />
             <div className="p-5 border border-gray-200 rounded-xl max-w-md">
               <div className="flex items-center justify-between">
                 <div>

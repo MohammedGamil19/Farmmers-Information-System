@@ -115,7 +115,7 @@ export default function FarmsPage() {
       <div className="flex items-start justify-between mb-6 gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Kebun</h1>
-          <p className="text-gray-500 text-sm">Kelola kebun hidroponik</p>
+          <p className="text-gray-500 text-sm">Kelola data kebun dan tanaman</p>
         </div>
         <Button onClick={() => setShowModal(true)} className="shrink-0"><Plus size={16} />Tambah Kebun</Button>
       </div>
