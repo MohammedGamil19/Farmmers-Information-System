@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
@@ -7,12 +7,14 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Leaf, BarChart3, FileText,
   Bell, User, Settings, LogOut, Menu, X, MapPin, Users, Sprout, Globe,
-  Layers, Megaphone, CalendarDays, Wheat, History
+  Layers, Megaphone, CalendarDays, Wheat, History, ChevronDown,
 } from 'lucide-react'
 
+type NavItem = { href: string; icon: React.ElementType; label: string; scope: string; section: string }
+
 // scope: 'all' = both roles, 'admin' = admins only, 'farmer' = farmers only
-// section: groups items under a quiet header for scannability
-const navItems = [
+// section: groups items under a collapsible header for scannability
+const navItems: NavItem[] = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', scope: 'all', section: 'Utama' },
   { href: '/panen', icon: Wheat, label: 'Data Panen', scope: 'all', section: 'Utama' },
   { href: '/farms', icon: Leaf, label: 'Kebun Saya', scope: 'farmer', section: 'Utama' },
@@ -37,44 +39,43 @@ const navItems = [
 
 const SECTION_ORDER = ['Utama', 'Data Pertanian', 'Informasi', 'Analisis', 'Administrasi']
 
-export function Sidebar() {
-  const [open, setOpen] = useState(false)
-  const pathname = usePathname()
-  const { user, logout } = useAuth()
+const isActivePath = (pathname: string, href: string) => pathname === href || pathname.startsWith(href + '/')
 
-  const isAdmin = !!user && user.role !== 'FARMER'
-  const items = navItems.filter(i => {
-    if (i.scope === 'admin') return isAdmin
-    if (i.scope === 'farmer') return !isAdmin
-    return true
-  })
-  const groups = SECTION_ORDER
-    .map(section => ({ section, items: items.filter(i => i.section === section) }))
-    .filter(g => g.items.length > 0)
+type Group = { section: string; items: NavItem[] }
 
-  const NavLink = ({ item }: { item: (typeof navItems)[number] }) => {
-    const active = pathname === item.href || pathname.startsWith(item.href + '/')
-    return (
-      <Link
-        href={item.href}
-        onClick={() => setOpen(false)}
-        aria-current={active ? 'page' : undefined}
-        className={cn(
-          'group relative flex items-center gap-3 pl-4 pr-3 py-2 rounded-lg text-sm transition-all duration-150',
-          active
-            ? 'bg-white/15 text-white font-semibold'
-            : 'text-green-100/90 font-medium hover:bg-white/10 hover:text-white'
-        )}
-      >
-        {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-white" />}
-        <item.icon size={18} className={cn('shrink-0 transition-colors', active ? 'text-white' : 'text-green-200/70 group-hover:text-white')} />
-        <span className="truncate">{item.label}</span>
-      </Link>
-    )
-  }
+function SidebarBody({
+  userName, roleLabel, isAdmin, groups, pathname, onNavigate, logout,
+}: {
+  userName?: string
+  roleLabel: string
+  isAdmin: boolean
+  groups: Group[]
+  pathname: string
+  onNavigate: () => void
+  logout: () => void
+}) {
+  const activeSection = groups.find(g => g.items.some(i => isActivePath(pathname, i.href)))?.section ?? null
+  // Accordion (admin only): open the section that contains the current page
+  const [openSection, setOpenSection] = useState<string | null>(activeSection)
+  useEffect(() => { if (activeSection) setOpenSection(activeSection) }, [activeSection])
 
-  const SidebarContent = () => (
+  // Scroll fade edges
+  const navRef = useRef<HTMLDivElement>(null)
+  const [fadeTop, setFadeTop] = useState(false)
+  const [fadeBottom, setFadeBottom] = useState(false)
+  const updateFades = useCallback(() => {
+    const el = navRef.current
+    if (!el) return
+    setFadeTop(el.scrollTop > 4)
+    setFadeBottom(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
+  }, [])
+  useEffect(() => { updateFades() }, [openSection, groups, updateFades])
+
+  const sectionOpen = (section: string) => !isAdmin || openSection === section
+
+  return (
     <div className="flex flex-col h-full overflow-hidden">
+      {/* Brand header */}
       <div className="px-5 py-5 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-white/15 ring-1 ring-white/20 flex items-center justify-center shrink-0">
@@ -86,27 +87,74 @@ export function Sidebar() {
           </div>
         </div>
       </div>
-      <nav className="flex-1 px-3 py-3 overflow-y-auto">
-        {groups.map(group => (
-          <div key={group.section} className="mb-1">
-            <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-green-300/60">{group.section}</p>
-            <div className="space-y-0.5">
-              {group.items.map(item => <NavLink key={item.href + item.label} item={item} />)}
-            </div>
-          </div>
-        ))}
-      </nav>
+
+      {/* Nav with fade edges */}
+      <div className="relative flex-1 overflow-hidden">
+        {fadeTop && <div className="pointer-events-none absolute top-0 inset-x-0 h-5 bg-gradient-to-b from-green-700 to-transparent z-10" />}
+        <div ref={navRef} onScroll={updateFades} className="nav-scroll h-full overflow-y-auto px-3 py-3">
+          {groups.map(group => {
+            const open = sectionOpen(group.section)
+            const hasActive = group.items.some(i => isActivePath(pathname, i.href))
+            return (
+              <div key={group.section} className="mb-1">
+                {isAdmin ? (
+                  <button
+                    onClick={() => setOpenSection(prev => (prev === group.section ? null : group.section))}
+                    className="w-full flex items-center justify-between px-3 pt-3 pb-1.5 group/sec"
+                  >
+                    <span className={cn('text-[10px] font-semibold uppercase tracking-wider transition-colors', hasActive ? 'text-white/85' : 'text-green-300/60 group-hover/sec:text-green-200')}>
+                      {group.section}
+                    </span>
+                    <ChevronDown size={13} className={cn('text-green-300/50 transition-transform duration-200', open ? '' : '-rotate-90')} />
+                  </button>
+                ) : (
+                  <p className="px-3 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-green-300/60">{group.section}</p>
+                )}
+
+                {open && (
+                  <div className="space-y-0.5">
+                    {group.items.map(item => {
+                      const active = isActivePath(pathname, item.href)
+                      return (
+                        <Link
+                          key={item.href + item.label}
+                          href={item.href}
+                          onClick={onNavigate}
+                          aria-current={active ? 'page' : undefined}
+                          className={cn(
+                            'group relative flex items-center gap-3 pl-4 pr-3 py-2 rounded-lg text-sm transition-all duration-150',
+                            active
+                              ? 'bg-white/15 text-white font-semibold'
+                              : 'text-green-100/90 font-medium hover:bg-white/10 hover:text-white'
+                          )}
+                        >
+                          {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full bg-white" />}
+                          <item.icon size={18} className={cn('shrink-0 transition-colors', active ? 'text-white' : 'text-green-200/70 group-hover:text-white')} />
+                          <span className="truncate">{item.label}</span>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        {fadeBottom && <div className="pointer-events-none absolute bottom-0 inset-x-0 h-5 bg-gradient-to-t from-green-800 to-transparent z-10" />}
+      </div>
+
+      {/* User footer */}
       <div className="p-3 border-t border-white/10 shrink-0">
         <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/10 mb-1">
           <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white text-sm font-bold shrink-0">
-            {user?.name?.charAt(0).toUpperCase()}
+            {userName?.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-medium truncate">{user?.name}</p>
-            <p className="text-green-300 text-xs truncate">{isAdmin ? 'Admin' : 'Petani'}</p>
+            <p className="text-white text-sm font-medium truncate">{userName}</p>
+            <p className="text-green-300 text-xs truncate">{roleLabel}</p>
           </div>
         </div>
-        <Link href="/profile" onClick={() => setOpen(false)} className="flex items-center gap-3 px-3 py-2 text-green-100/90 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-colors">
+        <Link href="/profile" onClick={onNavigate} className="flex items-center gap-3 px-3 py-2 text-green-100/90 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-colors">
           <User size={16} className="text-green-200/70" /> Profil
         </Link>
         <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2 text-green-100/90 hover:text-white hover:bg-white/10 rounded-lg text-sm transition-colors">
@@ -115,6 +163,31 @@ export function Sidebar() {
       </div>
     </div>
   )
+}
+
+export function Sidebar() {
+  const [open, setOpen] = useState(false)
+  const pathname = usePathname()
+  const { user, logout } = useAuth()
+
+  const isAdmin = !!user && user.role !== 'FARMER'
+  const items = navItems.filter(i => {
+    if (i.scope === 'admin') return isAdmin
+    if (i.scope === 'farmer') return !isAdmin
+    return true
+  })
+  const groups: Group[] = SECTION_ORDER
+    .map(section => ({ section, items: items.filter(i => i.section === section) }))
+    .filter(g => g.items.length > 0)
+
+  const bodyProps = {
+    userName: user?.name,
+    roleLabel: isAdmin ? 'Admin' : 'Petani',
+    isAdmin,
+    groups,
+    pathname,
+    logout,
+  }
 
   return (
     <>
@@ -132,11 +205,11 @@ export function Sidebar() {
       {open && <div className="lg:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setOpen(false)} />}
       {/* Mobile sidebar */}
       <aside className={cn('lg:hidden fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-green-700 to-green-800 z-50 transform transition-transform duration-200', open ? 'translate-x-0' : '-translate-x-full')}>
-        <SidebarContent />
+        <SidebarBody {...bodyProps} onNavigate={() => setOpen(false)} />
       </aside>
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-gradient-to-b from-green-700 to-green-800 h-screen fixed top-0 left-0 shadow-xl">
-        <SidebarContent />
+        <SidebarBody {...bodyProps} onNavigate={() => {}} />
       </aside>
     </>
   )
