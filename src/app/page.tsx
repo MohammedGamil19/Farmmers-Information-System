@@ -1,4 +1,6 @@
-export const dynamic = 'force-dynamic'
+// Cache the public landing page (ISR): fast CDN delivery + good for SEO.
+// Live stats refresh at most every 30 minutes.
+export const revalidate = 1800
 import Link from 'next/link'
 import Image from 'next/image'
 import { Leaf, BarChart3, Bell, Shield, CheckCircle, FileText, Users, MapPin, Wheat } from 'lucide-react'
