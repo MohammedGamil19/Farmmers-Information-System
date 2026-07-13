@@ -40,6 +40,11 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  // Set GOOGLE_SITE_VERIFICATION in Vercel env vars (the code from Search
+  // Console's HTML-tag method), then redeploy. Left out entirely if unset.
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

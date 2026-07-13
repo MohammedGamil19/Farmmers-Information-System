@@ -144,6 +144,27 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* ── SEO intro (always rendered — indexable descriptive content) ─────── */}
+      <section className="py-16 px-6 bg-white border-t border-gray-100">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
+            Sistem Informasi Dokumentasi Hasil Panen GAPOKTAN Sukorejo
+          </h2>
+          <p className="text-gray-600 leading-relaxed mb-4">
+            Platform digital GAPOKTAN Sukorejo di Desa Sukorejo, Kecamatan Bungah, Kabupaten Gresik,
+            untuk mendokumentasikan data produksi hasil panen pertanian secara terstruktur, akurat,
+            dan mudah diakses. Sistem ini membantu kelompok tani mendigitalisasi pencatatan hasil
+            panen agar produksi pertanian desa lebih tertata dan transparan.
+          </p>
+          <p className="text-gray-600 leading-relaxed">
+            Melalui aplikasi ini, petani dan pengurus GAPOKTAN dapat mencatat hasil panen per kebun
+            dan per jenis tanaman, mengelola data keanggotaan serta lahan pertanian, dan memantau
+            total produksi dari waktu ke waktu — semua dalam satu sistem informasi pertanian
+            berbasis web yang sederhana dan ramah bagi petani desa.
+          </p>
+        </div>
+      </section>
+
       {/* ── About / Village Info ─────────────────────────────────────────────── */}
       {about.enabled && (
         <section className="py-20 px-6 bg-gray-50">
