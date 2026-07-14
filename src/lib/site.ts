@@ -1,7 +1,7 @@
-// Canonical site URL. Set NEXT_PUBLIC_SITE_URL in Vercel once you attach a
-// custom domain; falls back to the current Vercel production URL.
+// Canonical site URL. Defaults to the live custom domain; override with
+// NEXT_PUBLIC_SITE_URL only if the domain ever changes.
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || 'https://hydroponic-monitor-seven.vercel.app'
+  process.env.NEXT_PUBLIC_SITE_URL || 'https://gapoktansukorejo.com'
 ).replace(/\/$/, '')
 
 export const SITE_NAME = 'SI Dokumentasi Panen'
