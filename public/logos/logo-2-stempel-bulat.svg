@@ -1,0 +1,63 @@
+<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GAPOKTAN Sukorejo — Kabupaten Gresik">
+  <defs>
+    <path id="topArc" d="M 21 120 A 99 99 0 0 1 219 120"/>
+    <path id="botArc" d="M 219 120 A 99 99 0 0 1 21 120"/>
+  </defs>
+
+  <!-- Outer ring band -->
+  <circle cx="120" cy="120" r="118" fill="#12813E"/>
+  <circle cx="120" cy="120" r="118" fill="none" stroke="#F5C518" stroke-width="4"/>
+  <circle cx="120" cy="120" r="81" fill="none" stroke="#F5C518" stroke-width="2.5"/>
+
+  <!-- Ring text (now inside the green band, clearly legible) -->
+  <text font-family="Arial, 'Segoe UI', sans-serif" font-size="19.5" font-weight="700" letter-spacing="1" fill="#FFFFFF">
+    <textPath href="#topArc" startOffset="50%" text-anchor="middle">GAPOKTAN SUKOREJO</textPath>
+  </text>
+  <text font-family="Arial, 'Segoe UI', sans-serif" font-size="16" font-weight="700" letter-spacing="3" fill="#FFFFFF">
+    <textPath href="#botArc" startOffset="50%" text-anchor="middle">KABUPATEN GRESIK</textPath>
+  </text>
+
+  <!-- Star separators at 3 & 9 o'clock -->
+  <g fill="#F5C518">
+    <path d="M21 114 l4 6 -4 6 -4 -6 Z"/>
+    <path d="M219 114 l4 6 -4 6 -4 -6 Z"/>
+  </g>
+
+  <!-- Inner disc -->
+  <circle cx="120" cy="120" r="79" fill="#F6F8F1"/>
+
+  <!-- Sun -->
+  <g stroke="#F5C518" stroke-width="4" stroke-linecap="round">
+    <line x1="120" y1="62" x2="120" y2="54"/>
+    <line x1="103" y1="66" x2="98" y2="59"/>
+    <line x1="137" y1="66" x2="142" y2="59"/>
+  </g>
+  <circle cx="120" cy="78" r="12" fill="#F5C518"/>
+
+  <!-- Rice stalks -->
+  <g stroke="#C99A2C" stroke-width="2.5" fill="#F0B429" stroke-linecap="round">
+    <path d="M107 176 C 85 164 75 138 80 114" fill="none"/>
+    <ellipse cx="82" cy="118" rx="4" ry="7" transform="rotate(-30 82 118)"/>
+    <ellipse cx="86" cy="133" rx="4" ry="7" transform="rotate(-30 86 133)"/>
+    <ellipse cx="93" cy="148" rx="4" ry="7" transform="rotate(-30 93 148)"/>
+    <ellipse cx="101" cy="162" rx="4" ry="7" transform="rotate(-30 101 162)"/>
+    <path d="M133 176 C 155 164 165 138 160 114" fill="none"/>
+    <ellipse cx="158" cy="118" rx="4" ry="7" transform="rotate(30 158 118)"/>
+    <ellipse cx="154" cy="133" rx="4" ry="7" transform="rotate(30 154 133)"/>
+    <ellipse cx="147" cy="148" rx="4" ry="7" transform="rotate(30 147 148)"/>
+    <ellipse cx="139" cy="162" rx="4" ry="7" transform="rotate(30 139 162)"/>
+  </g>
+
+  <!-- Central sprout -->
+  <path d="M120 182 C 120 158 120 128 120 104" fill="none" stroke="#137A3C" stroke-width="5.5" stroke-linecap="round"/>
+  <path d="M120 142 C 100 140 89 122 91 105 C 109 109 119 125 120 142 Z" fill="#22A24C"/>
+  <path d="M120 142 C 140 140 151 122 149 105 C 131 109 121 125 120 142 Z" fill="#2CB956"/>
+  <path d="M120 118 C 109 114 104 103 106 94 C 117 98 120 107 120 118 Z" fill="#2CB956"/>
+  <path d="M120 118 C 131 114 136 103 134 94 C 123 98 120 107 120 118 Z" fill="#22A24C"/>
+
+  <!-- Waves -->
+  <g fill="none" stroke="#1E3A8A" stroke-width="3" stroke-linecap="round">
+    <path d="M93 186 q 10 -7 20 0 t 20 0 t 20 0"/>
+    <path d="M99 194 q 10 -6 20 0 t 20 0"/>
+  </g>
+</svg>

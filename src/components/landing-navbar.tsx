@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Leaf } from 'lucide-react'
+import { SealMark } from '@/components/seal-mark'
 
 export function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -22,11 +22,9 @@ export function LandingNavbar() {
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2">
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-300 ${scrolled ? 'bg-white/20' : 'bg-black/20'}`}>
-          <Leaf size={18} className="text-white" />
-        </div>
-        <span className="font-bold text-lg text-white drop-shadow">SI Dokumentasi Panen</span>
+      <div className="flex items-center gap-2.5">
+        <SealMark className="w-9 h-9 shrink-0 drop-shadow" />
+        <span className="font-bold text-lg text-white drop-shadow">GAPOKTAN Sukorejo</span>
       </div>
 
       {/* CTA */}

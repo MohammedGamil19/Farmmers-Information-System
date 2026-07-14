@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { cn } from '@/lib/utils'
+import { SealMark } from '@/components/seal-mark'
 import {
   LayoutDashboard, Leaf, BarChart3, FileText,
   Bell, User, Settings, LogOut, Menu, X, MapPin, Users, Sprout, Globe,
@@ -78,12 +79,10 @@ function SidebarBody({
       {/* Brand header */}
       <div className="px-5 py-5 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/15 ring-1 ring-white/20 flex items-center justify-center shrink-0">
-            <Leaf className="text-white" size={22} />
-          </div>
+          <SealMark className="w-11 h-11 shrink-0" />
           <div className="min-w-0">
-            <p className="text-white font-bold text-sm leading-tight truncate">SI Dokumentasi Panen</p>
-            <p className="text-green-300 text-xs truncate">Produksi Hasil Panen Pertanian</p>
+            <p className="text-white font-bold text-sm leading-tight truncate">GAPOKTAN Sukorejo</p>
+            <p className="text-green-300 text-xs truncate">Dokumentasi Hasil Panen</p>
           </div>
         </div>
       </div>
@@ -194,8 +193,8 @@ export function Sidebar() {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-green-800 flex items-center justify-between px-4 py-3 shadow-sm">
         <div className="flex items-center gap-2">
-          <Leaf className="text-white" size={20} />
-          <span className="text-white font-bold text-sm">SI Dokumentasi Panen</span>
+          <SealMark className="w-7 h-7 shrink-0" />
+          <span className="text-white font-bold text-sm">GAPOKTAN Sukorejo</span>
         </div>
         <button onClick={() => setOpen(!open)} className="text-white p-1" aria-label="Menu">
           {open ? <X size={22} /> : <Menu size={22} />}

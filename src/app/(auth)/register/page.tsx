@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Leaf, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
+import { SealMark } from '@/components/seal-mark'
 import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -62,9 +63,7 @@ export default function RegisterPage() {
     <div className="w-full max-w-md">
       <div className="bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-2xl mb-4">
-            <Leaf className="text-green-600" size={32} />
-          </div>
+          <SealMark className="w-20 h-20 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-800">Buat Akun Baru</h1>
           <p className="text-gray-500 mt-1">Daftar untuk mulai menggunakan SI Dokumentasi Panen</p>
         </div>
