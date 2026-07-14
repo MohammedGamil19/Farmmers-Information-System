@@ -354,7 +354,7 @@ export default function CmsPage() {
                 <div>
                   <FieldLabel>Deskripsi / Sub-judul</FieldLabel>
                   <textarea value={hero.subtitle} onChange={e => setHero(h => ({ ...h, subtitle: e.target.value }))} rows={3}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-400 resize-none"
                     placeholder="Deskripsi singkat program..." />
                 </div>
                 <div>
@@ -463,7 +463,7 @@ export default function CmsPage() {
                 <FieldLabel>Isi Teks</FieldLabel>
                 <textarea value={about.body} onChange={e => setAbout(a => ({ ...a, body: e.target.value }))} rows={6}
                   disabled={!about.enabled}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 resize-none disabled:opacity-50"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-400 resize-none disabled:opacity-50"
                   placeholder="Ceritakan tentang program dan desa Anda..." />
                 <p className="text-xs text-gray-400 mt-1">Gunakan baris baru untuk paragraf baru.</p>
               </div>

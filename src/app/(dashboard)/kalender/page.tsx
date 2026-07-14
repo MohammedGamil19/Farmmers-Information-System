@@ -157,7 +157,7 @@ export default function KalenderPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
             <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500" />
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-green-500" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Tanggal Mulai *" type="date" value={form.startDate} onChange={e => setForm({ ...form, startDate: e.target.value })} required />
