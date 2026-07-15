@@ -26,7 +26,6 @@ import {
   Images, Award, Lock, KeyRound, EyeOff,
 } from 'lucide-react'
 
-const CREDITS_PASSWORD = '1289233'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -222,6 +221,21 @@ export default function CmsPage() {
   const [pwInput, setPwInput] = useState('')
   const [pwVisible, setPwVisible] = useState(false)
   const [pwError, setPwError] = useState(false)
+  const [pwLoading, setPwLoading] = useState(false)
+
+  // Verify the credits password on the server (never shipped to the browser)
+  const verifyCredits = async () => {
+    if (!pwInput || pwLoading) return
+    setPwLoading(true); setPwError(false)
+    try {
+      await api.post('/api/cms/verify-credits', { password: pwInput })
+      setCreditsUnlocked(true); setPwInput('')
+    } catch {
+      setPwError(true); setPwInput('')
+    } finally {
+      setPwLoading(false)
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -598,12 +612,7 @@ export default function CmsPage() {
                   type={pwVisible ? 'text' : 'password'}
                   value={pwInput}
                   onChange={e => { setPwInput(e.target.value); setPwError(false) }}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      if (pwInput === CREDITS_PASSWORD) { setCreditsUnlocked(true); setPwInput('') }
-                      else { setPwError(true); setPwInput('') }
-                    }
-                  }}
+                  onKeyDown={e => { if (e.key === 'Enter') verifyCredits() }}
                   placeholder="Masukkan kata sandi..."
                   className={`w-full border rounded-xl pl-9 pr-10 py-3 text-sm focus:outline-none focus:ring-2 transition-colors ${
                     pwError ? 'border-red-400 focus:ring-red-300 bg-red-50' : 'border-gray-300 focus:ring-green-400'
@@ -624,13 +633,11 @@ export default function CmsPage() {
               )}
 
               <button
-                onClick={() => {
-                  if (pwInput === CREDITS_PASSWORD) { setCreditsUnlocked(true); setPwInput('') }
-                  else { setPwError(true); setPwInput('') }
-                }}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+                onClick={verifyCredits}
+                disabled={pwLoading}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-60"
               >
-                Buka Akses
+                {pwLoading ? 'Memeriksa...' : 'Buka Akses'}
               </button>
             </div>
           </div>
