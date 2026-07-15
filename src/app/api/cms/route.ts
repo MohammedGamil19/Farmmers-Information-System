@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 
@@ -72,6 +73,8 @@ export async function PUT(request: NextRequest) {
       create: { key, value: JSON.stringify(value) },
       update: { value: JSON.stringify(value) },
     })
+    // Bust the cached landing page so edits appear immediately
+    revalidatePath('/')
     return NextResponse.json({ ok: true })
   } catch (err) {
     console.error(err)
