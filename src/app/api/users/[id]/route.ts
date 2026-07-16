@@ -17,8 +17,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const target = await prisma.user.findUnique({ where: { id }, select: { id: true } })
+  const target = await prisma.user.findUnique({ where: { id }, select: { id: true, email: true, name: true } })
   if (!target) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // The developer account can only be edited by the developer themselves.
+  if (isDeveloper(target) && !isSelf) {
+    return NextResponse.json({ error: 'Akun developer tidak dapat diubah' }, { status: 403 })
+  }
 
   const body = await request.json()
   const data: Record<string, unknown> = {}

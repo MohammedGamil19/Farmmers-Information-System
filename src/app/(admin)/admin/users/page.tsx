@@ -179,11 +179,13 @@ export default function ManajemenPenggunaPage() {
                           <p className="text-xs text-gray-400 mt-1.5">{u._count.farms} kebun · {u.totalPanenKg} kg · {u._count.panens} panen</p>
                         )}
                       </div>
-                      <div className="flex gap-1 shrink-0">
-                        <button onClick={() => openEdit(u)} title="Edit" className="text-blue-600 p-2 rounded-lg hover:bg-blue-50"><Pencil size={15} /></button>
-                        <button onClick={() => toggleActive(u)} title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'} className={`p-2 rounded-lg ${u.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`}><Power size={15} /></button>
-                        {canDelete(u) && <button onClick={() => removeUser(u)} title="Hapus permanen" className="text-red-600 p-2 rounded-lg hover:bg-red-50"><Trash2 size={15} /></button>}
-                      </div>
+                      {!isDeveloper(u) && (
+                        <div className="flex gap-1 shrink-0">
+                          <button onClick={() => openEdit(u)} title="Edit" className="text-blue-600 p-2 rounded-lg hover:bg-blue-50"><Pencil size={15} /></button>
+                          <button onClick={() => toggleActive(u)} title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'} className={`p-2 rounded-lg ${u.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`}><Power size={15} /></button>
+                          {canDelete(u) && <button onClick={() => removeUser(u)} title="Hapus permanen" className="text-red-600 p-2 rounded-lg hover:bg-red-50"><Trash2 size={15} /></button>}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -218,12 +220,16 @@ export default function ManajemenPenggunaPage() {
                         <td className="px-4 py-3"><Badge variant={u.isActive ? (STATUS_COLORS[u.memberStatus] || 'default') : 'danger'}>{u.isActive ? STATUS_LABELS[u.memberStatus] : 'Nonaktif'}</Badge></td>
                         <td className="px-4 py-3 text-gray-500 text-xs">{u.lastLoginAt ? formatDate(u.lastLoginAt) : 'Belum pernah'}</td>
                         <td className="px-4 py-3">
-                          <div className="flex gap-1">
-                            <button onClick={() => openEdit(u)} title="Edit / Reset Password" className="text-blue-600 hover:bg-blue-50 p-1.5 rounded"><Pencil size={15} /></button>
-                            <button onClick={() => toggleActive(u)} title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'} className={`p-1.5 rounded ${u.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`}><Power size={15} /></button>
-                            {u.role === 'FARMER' && <Link href={`/aktivitas?userId=${u.id}`} title="Lihat aktivitas" className="text-gray-500 hover:bg-gray-100 p-1.5 rounded"><History size={15} /></Link>}
-                            {canDelete(u) && <button onClick={() => removeUser(u)} title="Hapus permanen" className="text-red-600 hover:bg-red-50 p-1.5 rounded"><Trash2 size={15} /></button>}
-                          </div>
+                          {isDeveloper(u) ? (
+                            <span className="text-xs text-gray-300">—</span>
+                          ) : (
+                            <div className="flex gap-1">
+                              <button onClick={() => openEdit(u)} title="Edit / Reset Password" className="text-blue-600 hover:bg-blue-50 p-1.5 rounded"><Pencil size={15} /></button>
+                              <button onClick={() => toggleActive(u)} title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'} className={`p-1.5 rounded ${u.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`}><Power size={15} /></button>
+                              {u.role === 'FARMER' && <Link href={`/aktivitas?userId=${u.id}`} title="Lihat aktivitas" className="text-gray-500 hover:bg-gray-100 p-1.5 rounded"><History size={15} /></Link>}
+                              {canDelete(u) && <button onClick={() => removeUser(u)} title="Hapus permanen" className="text-red-600 hover:bg-red-50 p-1.5 rounded"><Trash2 size={15} /></button>}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
