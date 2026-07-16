@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { cn } from '@/lib/utils'
 import { SealMark } from '@/components/seal-mark'
+import { isDeveloper } from '@/lib/developer'
 import {
   LayoutDashboard, Leaf, BarChart3, FileText,
   Bell, User, Settings, LogOut, Menu, X, MapPin, Users, Sprout, Globe,
@@ -181,7 +182,7 @@ export function Sidebar() {
 
   const bodyProps = {
     userName: user?.name,
-    roleLabel: isAdmin ? 'Admin' : 'Petani',
+    roleLabel: isDeveloper(user) ? 'Developer' : isAdmin ? 'Admin' : 'Petani',
     isAdmin,
     groups,
     pathname,

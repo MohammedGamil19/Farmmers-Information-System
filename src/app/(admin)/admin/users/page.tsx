@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Modal } from '@/components/ui/modal'
 import { toast } from '@/components/ui/toaster'
-import { Plus, Pencil, KeyRound, Power, Users, Sprout, Scale, Search, Leaf, History } from 'lucide-react'
-import { getRoleLabel, formatDate } from '@/lib/utils'
+import { Plus, Pencil, KeyRound, Power, Users, Scale, Search, History, Trash2, ShieldCheck, Code2 } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
+import { isDeveloper } from '@/lib/developer'
 
 type Village = { id: string; name: string }
 type UserRow = {
@@ -27,6 +28,16 @@ const STATUS_COLORS: Record<string, 'success' | 'warning' | 'danger'> = { ACTIVE
 const STATUS_LABELS: Record<string, string> = { ACTIVE: 'Aktif', PENDING: 'Menunggu', INACTIVE: 'Nonaktif' }
 
 const EMPTY_FORM = { name: '', email: '', password: '', role: 'FARMER', phone: '', nik: '', address: '', rt: '', rw: '', villageId: '', memberStatus: 'ACTIVE' }
+
+function RoleBadge({ u }: { u: { role: string; email?: string | null; name?: string | null } }) {
+  if (isDeveloper(u)) {
+    return <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-indigo-600 text-white"><Code2 size={11} /> Developer</span>
+  }
+  if (u.role !== 'FARMER') {
+    return <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-800 text-white"><ShieldCheck size={11} /> Admin</span>
+  }
+  return <Badge variant="success">Petani</Badge>
+}
 
 export default function ManajemenPenggunaPage() {
   const { user } = useAuth()
@@ -87,6 +98,17 @@ export default function ManajemenPenggunaPage() {
       toast('success', u.isActive ? 'Pengguna dinonaktifkan' : 'Pengguna diaktifkan'); load()
     } catch { toast('error', 'Gagal') }
   }
+
+  const removeUser = async (u: UserRow) => {
+    if (!confirm(`Hapus permanen pengguna "${u.name}"? Tindakan ini tidak dapat dibatalkan.`)) return
+    try {
+      await api.delete(`/api/users/${u.id}`)
+      toast('success', `Pengguna "${u.name}" dihapus`); load()
+    } catch (err) { toast('error', err instanceof Error ? err.message : 'Gagal menghapus') }
+  }
+
+  // Whether the current admin may permanently delete this row
+  const canDelete = (u: UserRow) => u.id !== user?.id && !isDeveloper(u)
 
   const farmers = users.filter(u => u.role === 'FARMER')
   const admins = users.filter(u => u.role !== 'FARMER')
@@ -149,7 +171,7 @@ export default function ManajemenPenggunaPage() {
                         <p className="font-semibold text-gray-800">{u.name}</p>
                         <p className="text-xs text-gray-500">{u.phone || u.email}</p>
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          <Badge variant={u.role === 'FARMER' ? 'success' : 'warning'}>{getRoleLabel(u.role)}</Badge>
+                          <RoleBadge u={u} />
                           <Badge variant={u.isActive ? (STATUS_COLORS[u.memberStatus] || 'default') : 'danger'}>{u.isActive ? STATUS_LABELS[u.memberStatus] : 'Nonaktif'}</Badge>
                           {u.village && <span className="text-xs text-gray-500 self-center">{u.village.name}</span>}
                         </div>
@@ -158,8 +180,9 @@ export default function ManajemenPenggunaPage() {
                         )}
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        <button onClick={() => openEdit(u)} className="text-blue-600 p-2 rounded-lg hover:bg-blue-50"><Pencil size={15} /></button>
-                        <button onClick={() => toggleActive(u)} className={`p-2 rounded-lg ${u.isActive ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}`}><Power size={15} /></button>
+                        <button onClick={() => openEdit(u)} title="Edit" className="text-blue-600 p-2 rounded-lg hover:bg-blue-50"><Pencil size={15} /></button>
+                        <button onClick={() => toggleActive(u)} title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'} className={`p-2 rounded-lg ${u.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`}><Power size={15} /></button>
+                        {canDelete(u) && <button onClick={() => removeUser(u)} title="Hapus permanen" className="text-red-600 p-2 rounded-lg hover:bg-red-50"><Trash2 size={15} /></button>}
                       </div>
                     </div>
                   </div>
@@ -187,7 +210,7 @@ export default function ManajemenPenggunaPage() {
                           <p className="font-medium text-gray-800">{u.name}</p>
                           {u.nik && <p className="text-xs text-gray-400">NIK: {u.nik}</p>}
                         </td>
-                        <td className="px-4 py-3"><Badge variant={u.role === 'FARMER' ? 'success' : 'warning'}>{getRoleLabel(u.role)}</Badge></td>
+                        <td className="px-4 py-3"><RoleBadge u={u} /></td>
                         <td className="px-4 py-3 text-gray-600 text-xs">{u.phone || '-'}<div className="text-gray-400">{u.email}</div></td>
                         <td className="px-4 py-3 text-gray-600">{u.village?.name || '-'}</td>
                         <td className="px-4 py-3 text-gray-600">{u.role === 'FARMER' ? `${u._count.farms}` : '-'}</td>
@@ -197,8 +220,9 @@ export default function ManajemenPenggunaPage() {
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
                             <button onClick={() => openEdit(u)} title="Edit / Reset Password" className="text-blue-600 hover:bg-blue-50 p-1.5 rounded"><Pencil size={15} /></button>
-                            <button onClick={() => toggleActive(u)} title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'} className={`p-1.5 rounded ${u.isActive ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}`}><Power size={15} /></button>
+                            <button onClick={() => toggleActive(u)} title={u.isActive ? 'Nonaktifkan' : 'Aktifkan'} className={`p-1.5 rounded ${u.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`}><Power size={15} /></button>
                             {u.role === 'FARMER' && <Link href={`/aktivitas?userId=${u.id}`} title="Lihat aktivitas" className="text-gray-500 hover:bg-gray-100 p-1.5 rounded"><History size={15} /></Link>}
+                            {canDelete(u) && <button onClick={() => removeUser(u)} title="Hapus permanen" className="text-red-600 hover:bg-red-50 p-1.5 rounded"><Trash2 size={15} /></button>}
                           </div>
                         </td>
                       </tr>

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserFromRequest, hashPassword } from '@/lib/auth'
 import { logActivity } from '@/lib/activity'
+import { isDeveloper } from '@/lib/developer'
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = getUserFromRequest(request)
@@ -51,11 +52,44 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const user = getUserFromRequest(request)
   if (!user || user.role === 'FARMER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
-  const target = await prisma.user.findUnique({ where: { id }, select: { name: true, villageId: true } })
-  await prisma.user.update({ where: { id }, data: { isActive: false } })
+
+  if (id === user.userId) {
+    return NextResponse.json({ error: 'Tidak dapat menghapus akun sendiri' }, { status: 400 })
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id },
+    select: { name: true, email: true, villageId: true, _count: { select: { farms: true, lahans: true, panens: true } } },
+  })
+  if (!target) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  if (isDeveloper(target)) {
+    return NextResponse.json({ error: 'Akun developer tidak dapat dihapus' }, { status: 403 })
+  }
+
+  // A user that still owns data can't be permanently removed (it would orphan
+  // harvest/farm/land records). Ask the admin to deactivate instead.
+  const linked = target._count.farms + target._count.lahans + target._count.panens
+  if (linked > 0) {
+    return NextResponse.json(
+      { error: 'Pengguna masih memiliki data (kebun/lahan/panen). Nonaktifkan pengguna sebagai gantinya.' },
+      { status: 409 }
+    )
+  }
+
+  try {
+    await prisma.activityLog.deleteMany({ where: { userId: id } })
+    await prisma.user.delete({ where: { id } })
+  } catch {
+    return NextResponse.json(
+      { error: 'Tidak dapat menghapus permanen — pengguna memiliki data terkait. Nonaktifkan saja.' },
+      { status: 409 }
+    )
+  }
+
   await logActivity({
-    userId: user.userId, action: 'DELETE', entity: 'Pengguna', villageId: target?.villageId ?? null,
-    detail: `Menonaktifkan pengguna ${target?.name ?? ''}`.trim(),
+    userId: user.userId, action: 'DELETE', entity: 'Pengguna', villageId: target.villageId ?? null,
+    detail: `Menghapus pengguna ${target.name}`,
   })
   return NextResponse.json({ message: 'Deleted' })
 }

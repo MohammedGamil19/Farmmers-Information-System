@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toaster'
-import { Settings, Users, Leaf, Scale, Wheat, ShieldCheck } from 'lucide-react'
+import { Settings, Users, Leaf, Scale, Wheat, ShieldCheck, Code2, Phone, Mail, MessageCircle } from 'lucide-react'
+import { DEVELOPER } from '@/lib/developer'
 
 export default function AdminSettingsPage() {
   const [stats, setStats] = useState<Record<string, unknown>>({})
@@ -102,13 +103,39 @@ export default function AdminSettingsPage() {
       </Card>
 
       {/* Keamanan */}
-      <Card>
+      <Card className="mb-6">
         <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck size={18} />Keamanan</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm text-gray-600">
             <p>• Kelola akun pengguna, reset password, dan aktif/nonaktifkan lewat menu <strong>Manajemen Pengguna</strong>.</p>
             <p>• Password disimpan terenkripsi (bcrypt). Sistem tidak menampilkan password siapa pun.</p>
             <p>• Semua perubahan data tercatat di <strong>Log Aktivitas</strong>.</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Dukungan Teknis / Developer */}
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Code2 size={18} />Dukungan Teknis</CardTitle></CardHeader>
+        <CardContent>
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shrink-0">MS</div>
+            <div className="min-w-0">
+              <p className="font-semibold text-gray-800">{DEVELOPER.name}</p>
+              <p className="text-xs text-indigo-600 font-medium mb-3">Developer / Pengembang Aplikasi</p>
+              <div className="space-y-2 text-sm">
+                <a href={`https://wa.me/${DEVELOPER.whatsapp}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-gray-700 hover:text-green-700">
+                  <MessageCircle size={15} className="text-green-600" /> WhatsApp: {DEVELOPER.phone}
+                </a>
+                <a href={`tel:${DEVELOPER.phone}`} className="flex items-center gap-2 text-gray-700 hover:text-green-700">
+                  <Phone size={15} className="text-gray-400" /> {DEVELOPER.phone}
+                </a>
+                <a href={`mailto:${DEVELOPER.email}`} className="flex items-center gap-2 text-gray-700 hover:text-green-700 break-all">
+                  <Mail size={15} className="text-gray-400" /> {DEVELOPER.email}
+                </a>
+              </div>
+              <p className="text-xs text-gray-400 mt-3">Hubungi untuk bantuan teknis, perbaikan, atau pembaruan sistem.</p>
+            </div>
           </div>
         </CardContent>
       </Card>
