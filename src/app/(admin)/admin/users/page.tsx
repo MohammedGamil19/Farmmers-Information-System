@@ -100,6 +100,11 @@ export default function ManajemenPenggunaPage() {
   }
 
   const removeUser = async (u: UserRow) => {
+    const linked = u._count.farms + u._count.lahans + u._count.panens
+    if (linked > 0) {
+      toast('warning', `"${u.name}" tidak dapat dihapus karena masih memiliki data (kebun/lahan/panen). Nonaktifkan pengguna sebagai gantinya.`)
+      return
+    }
     if (!confirm(`Hapus permanen pengguna "${u.name}"? Tindakan ini tidak dapat dibatalkan.`)) return
     try {
       await api.delete(`/api/users/${u.id}`)
